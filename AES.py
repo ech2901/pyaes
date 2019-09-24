@@ -15,15 +15,19 @@ from Key import iter_key
 
 
 # TODO finish commenting code
-# TODO Create docstrings for functions
 # TODO Create other block cipher operating modes
 
 
-def ecb_encrypt(plaintext, password, size, *, salt=None):
+def ecb_encrypt(plaintext: bytes, password: bytes, size: int, *, salt: bytes = None):
     '''
-    ecb_encrypt(plaintext: bytes, password: bytes, size: (128, 192, 256), *, salt=None: bytes)
+    Encrypt plaintext with the Electronic Code Book mode of operation
 
-    -> ciphertext: string, salt: bytes
+    :param plaintext: bytes
+    :param password: bytes
+    :param size: int (must be either 128, 192, or 256)
+    :param salt: None (not required)
+    :return: ciphertext: string, salt: bytes
+    :raise: ValueError: if size is not either 128, 192, or 256
     '''
     if salt is None:
         # If the salt input is not given, generate a random salt of 64 bytes
@@ -71,7 +75,7 @@ def ecb_encrypt(plaintext, password, size, *, salt=None):
             blocks[index] = encrypt_256(block, key)
 
     else:
-        return
+        raise ValueError(f'Expected size of either 128, 192, or 256 and recieved {size}')
 
     out = ''
     for block in blocks:
@@ -82,11 +86,16 @@ def ecb_encrypt(plaintext, password, size, *, salt=None):
     return out, salt
 
 
-def ecb_decrypt(ciphertext, password, salt, size):
+def ecb_decrypt(ciphertext: str, password: bytes, salt: bytes, size: int):
     '''
-    ecb_decrypt(ciphertext: string, password: bytes, salt=None: bytes, size: (128, 192, 256))
+    Decrypt ciphertext with the Electronic Code Book mode of operation
 
-    -> plaintext: bytes
+    :param ciphertext: str
+    :param password: bytes
+    :param salt: bytes
+    :param size: int (must be either 128, 192, or 256)
+    :return: plaintext: bytes
+    :raise: ValueError: if size is not either 128, 192, or 256
     '''
     # Convert a string with hex values to a bytes object
     ciphertext = bytes.fromhex(ciphertext)
@@ -135,7 +144,7 @@ def ecb_decrypt(ciphertext, password, salt, size):
             blocks[index] = decrypt_256(block, key)
 
     else:
-        return
+        raise ValueError(f'Expected size of either 128, 192, or 256 and recieved {size}')
 
     out = ''
     for block in blocks:
@@ -149,14 +158,26 @@ def ecb_decrypt(ciphertext, password, salt, size):
     return bytes.fromhex(out)
 
 
-def cbc_encrypt(plaintext, password, size, *, iv=None, salt=None):
+def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes=None, salt: bytes=None):
+    '''
+    Encrypt plaintext with the Cipher Block Chaining mode of operation
+
+    :param plaintext: bytes
+    :param password: bytes
+    :param size: int (must be either 128, 192, or 256)
+    :param iv: None (not required)
+    :param salt: None (not required
+    :return: ciphertext: string, iv: bytes, salt: bytes
+    :raise: ValueError: if size is not either 128, 192, or 256
+    '''
+
     if salt is None:
         salt = urandom(64)
 
     if iv is None:
         iv = urandom(16)
-    while len(iv) < 16:
-        iv = iv + b'\x00'
+    else:
+        iv = iv + urandom(16-len(iv))
 
     xor_iv = [GF(i) for i in iv]
 
@@ -192,7 +213,7 @@ def cbc_encrypt(plaintext, password, size, *, iv=None, salt=None):
             xor_iv = encrypt_256(block, key)
             blocks[index] = xor_iv
     else:
-        return
+        raise ValueError(f'Expected size of either 128, 192, or 256 and recieved {size}')
 
     out = ''
     for block in blocks:
@@ -202,8 +223,18 @@ def cbc_encrypt(plaintext, password, size, *, iv=None, salt=None):
     return out, iv, salt
 
 
-def cbc_decrypt(ciphertext, password, iv, salt, size):
+def cbc_decrypt(ciphertext: str, password: bytes, iv: bytes, salt: bytes, size: int):
+    '''
+    Decrypt ciphertext with the Cipher Block Chaining mode of operation
 
+    :param ciphertext: str
+    :param password: bytes
+    :param iv: bytes
+    :param salt: bytes
+    :param size: int (must be either 128, 192, or 256)
+    :return: plaintext: bytes
+    :raise: ValueError: if size is not either 128, 192, or 256
+    '''
     ciphertext = bytes.fromhex(ciphertext)
     ciphertext = [GF(i) for i in ciphertext]
     while len(ciphertext) % 16 != 0:
@@ -246,7 +277,7 @@ def cbc_decrypt(ciphertext, password, iv, salt, size):
             xor_iv = next_iv
 
     else:
-        return
+        raise ValueError(f'Expected size of either 128, 192, or 256 and recieved {size}')
 
     out = ''
     for block in blocks:

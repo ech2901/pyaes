@@ -4,7 +4,14 @@ from Field import GF, sbox, invsbox, modulus
 # TODO create docstrings
 # TODO format according to PEP 8
 
-def encrypt_128(state, key):
+def encrypt_128(state: list, key: list):
+    '''
+    Encrypt a block of GF instances with the key schedule
+
+    :param state: list
+    :param key: list
+    :return: list
+    '''
 
     state = addroundkey(state, next(key))
 
