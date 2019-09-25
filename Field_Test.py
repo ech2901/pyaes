@@ -6,7 +6,6 @@ from Field import sbox, invsbox
 
 # TODO comment code
 # TODO create docstrings
-# TODO format according to PEP 8
 
 
 class TestFieldMethods(unittest.TestCase):
@@ -39,7 +38,7 @@ class TestFieldMethods(unittest.TestCase):
 
     def test_int_extra_paramaters_fail(self):
         a = [1, 2]
-        for i in range(3,100):
+        for i in range(3, 100):
             self.assertRaises(Exception, GF, *a)
             a.append(i)
 
@@ -53,7 +52,6 @@ class TestFieldMethods(unittest.TestCase):
         param_a = (set(), set(), {0}, {1, 2, 3})
         param_b = (set(), {0, 1, 2, 3}, {1, 2, 3, 4}, {4, 5, 6})
         param_c = (set(), set(), {1, 2, 3, 4}, {5, 7, 9})
-
 
         for a, b, c in zip(param_a, param_b, param_c):
             self.assertEqual(GF.fromset(a) * GF.fromset(b), GF.fromset(c))
@@ -79,7 +77,6 @@ class TestFieldMethods(unittest.TestCase):
         for a in param_a:
             for b in param_b:
                 self.assertRaises(Exception, GF.fromset(a).__mod__, b)
-
 
     def test_xor_nofail(self):
         param_a = (set(), {0}, {1, 2, 3, 4}, {1, 3, 5, 7})

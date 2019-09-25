@@ -19,7 +19,7 @@ from Key import iter_key
 
 
 def ecb_encrypt(plaintext: bytes, password: bytes, size: int, *, salt: bytes = None):
-    '''
+    """
     Encrypt plaintext with the Electronic Code Book mode of operation
 
     :param plaintext: bytes
@@ -28,7 +28,7 @@ def ecb_encrypt(plaintext: bytes, password: bytes, size: int, *, salt: bytes = N
     :param salt: None (not required)
     :return: ciphertext: string, salt: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
-    '''
+    """
     if salt is None:
         # If the salt input is not given, generate a random salt of 64 bytes
         salt = urandom(64)
@@ -41,7 +41,7 @@ def ecb_encrypt(plaintext: bytes, password: bytes, size: int, *, salt: bytes = N
         plaintext.append(GF(0))
 
     # Separate each GF instance into a block of size 16
-    blocks = [plaintext[i:i+16] for i in range(0, len(plaintext), 16)]
+    blocks = [plaintext[i:i + 16] for i in range(0, len(plaintext), 16)]
 
     if size == 128:
         # For AES-128
@@ -87,7 +87,7 @@ def ecb_encrypt(plaintext: bytes, password: bytes, size: int, *, salt: bytes = N
 
 
 def ecb_decrypt(ciphertext: str, password: bytes, salt: bytes, size: int):
-    '''
+    """
     Decrypt ciphertext with the Electronic Code Book mode of operation
 
     :param ciphertext: str
@@ -96,7 +96,7 @@ def ecb_decrypt(ciphertext: str, password: bytes, salt: bytes, size: int):
     :param size: int (must be either 128, 192, or 256)
     :return: plaintext: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
-    '''
+    """
     # Convert a string with hex values to a bytes object
     ciphertext = bytes.fromhex(ciphertext)
     # Convert the bytes object ciphertext to an array of GF instances
@@ -108,7 +108,7 @@ def ecb_decrypt(ciphertext: str, password: bytes, salt: bytes, size: int):
         ciphertext.append(GF(0))
 
     # Break down the ciphertext into blocks of size 16
-    blocks = [ciphertext[i:i+16] for i in range(0, len(ciphertext), 16)]
+    blocks = [ciphertext[i:i + 16] for i in range(0, len(ciphertext), 16)]
 
     if size == 128:
         # For AES-128
@@ -140,7 +140,7 @@ def ecb_decrypt(ciphertext: str, password: bytes, salt: bytes, size: int):
         key = iter_key([GF(i) for i in key], 256, reverse=True)
 
         for index, block in enumerate(blocks):
-        # Encrypt each block with the key schedule
+            # Encrypt each block with the key schedule
             blocks[index] = decrypt_256(block, key)
 
     else:
@@ -158,8 +158,8 @@ def ecb_decrypt(ciphertext: str, password: bytes, salt: bytes, size: int):
     return bytes.fromhex(out)
 
 
-def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes=None, salt: bytes=None):
-    '''
+def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = None, salt: bytes = None):
+    """
     Encrypt plaintext with the Cipher Block Chaining mode of operation
 
     :param plaintext: bytes
@@ -169,7 +169,7 @@ def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes=None,
     :param salt: None (not required
     :return: ciphertext: string, iv: bytes, salt: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
-    '''
+    """
 
     if salt is None:
         salt = urandom(64)
@@ -177,7 +177,7 @@ def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes=None,
     if iv is None:
         iv = urandom(16)
     else:
-        iv = iv + urandom(16-len(iv))
+        iv = iv + urandom(16 - len(iv))
 
     xor_iv = [GF(i) for i in iv]
 
@@ -224,7 +224,7 @@ def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes=None,
 
 
 def cbc_decrypt(ciphertext: str, password: bytes, iv: bytes, salt: bytes, size: int):
-    '''
+    """
     Decrypt ciphertext with the Cipher Block Chaining mode of operation
 
     :param ciphertext: str
@@ -234,7 +234,7 @@ def cbc_decrypt(ciphertext: str, password: bytes, iv: bytes, salt: bytes, size: 
     :param size: int (must be either 128, 192, or 256)
     :return: plaintext: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
-    '''
+    """
     ciphertext = bytes.fromhex(ciphertext)
     ciphertext = [GF(i) for i in ciphertext]
     while len(ciphertext) % 16 != 0:
@@ -244,7 +244,7 @@ def cbc_decrypt(ciphertext: str, password: bytes, iv: bytes, salt: bytes, size: 
         iv = iv + b'\x00'
     xor_iv = [GF(i) for i in iv]
 
-    blocks = [ciphertext[i:i+16] for i in range(0, len(ciphertext), 16)]
+    blocks = [ciphertext[i:i + 16] for i in range(0, len(ciphertext), 16)]
 
     if size == 128:
         key = phash('sha256', password, salt, 1_000_000, 16)
@@ -288,7 +288,6 @@ def cbc_decrypt(ciphertext: str, password: bytes, iv: bytes, salt: bytes, size: 
     return bytes.fromhex(out)
 
 
-
 if __name__ == '__main__':
     plain = b'test'
     pwd = b'password'
@@ -297,8 +296,6 @@ if __name__ == '__main__':
     iv = None
 
     ciphertext, iv, salt = cbc_encrypt(plain, pwd, size, iv=iv, salt=salt)
-
-
 
     print(f'Plaintext:   {plain}')
     print(f'Password:    {pwd}')
@@ -310,14 +307,3 @@ if __name__ == '__main__':
     new_plain = cbc_decrypt(ciphertext, pwd, iv, salt, size)
 
     print(f'Decrypted:   {new_plain}')
-
-
-
-
-
-
-
-
-
-
-

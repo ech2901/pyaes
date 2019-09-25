@@ -2,7 +2,7 @@ from Field import GF, sbox, modulus
 
 # TODO comment code
 # TODO create docstrings
-# TODO format according to PEP 8
+
 
 def expand_128(key):
     i = 1
@@ -16,6 +16,7 @@ def expand_128(key):
             key.append(item ^ key[-16])
     return key
 
+
 def expand_192(key):
     i = 1
     while len(key) < 208:
@@ -27,6 +28,7 @@ def expand_192(key):
             key.append(item ^ key[-24])
 
     return key
+
 
 def expand_256(key):
     i = 1
@@ -46,10 +48,12 @@ def expand_256(key):
 
     return key
 
+
 def schedule_core(temp, i):
     def rotate(arr):
         arr.append(arr.pop(0))
         return arr
+
     def rcon():
         return GF(1 << (i-1)) % modulus
 
@@ -58,6 +62,7 @@ def schedule_core(temp, i):
         temp[index] = sbox(item)
     temp[0] = temp[0] ^ rcon()
     return temp
+
 
 def iter_key(key, size, *, reverse=False):
     if size == 128:
@@ -78,4 +83,3 @@ def iter_key(key, size, *, reverse=False):
     while True:
         for key in keys:
             yield key
-

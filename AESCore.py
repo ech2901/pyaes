@@ -1,17 +1,17 @@
 from Field import GF, sbox, invsbox, modulus
 
+
 # TODO comment code
 # TODO create docstrings
-# TODO format according to PEP 8
 
 def encrypt_128(state: list, key: list):
-    '''
+    """
     Encrypt a block of GF instances with the key schedule
 
     :param state: list
     :param key: list
     :return: list
-    '''
+    """
 
     state = addroundkey(state, next(key))
 
@@ -26,9 +26,9 @@ def encrypt_128(state: list, key: list):
     state = addroundkey(state, next(key))
 
     return state
+
 
 def decrypt_128(state, key):
-
     state = addroundkey(state, next(key))
     state = invshiftrows(state)
     state = invsubbytes(state)
@@ -43,8 +43,8 @@ def decrypt_128(state, key):
 
     return state
 
-def encrypt_192(state, key):
 
+def encrypt_192(state, key):
     state = addroundkey(state, next(key))
 
     for _ in range(11):
@@ -58,9 +58,9 @@ def encrypt_192(state, key):
     state = addroundkey(state, next(key))
 
     return state
+
 
 def decrypt_192(state, key):
-
     state = addroundkey(state, next(key))
     state = invshiftrows(state)
     state = invsubbytes(state)
@@ -75,8 +75,8 @@ def decrypt_192(state, key):
 
     return state
 
-def encrypt_256(state, key):
 
+def encrypt_256(state, key):
     state = addroundkey(state, next(key))
 
     for _ in range(13):
@@ -91,8 +91,8 @@ def encrypt_256(state, key):
 
     return state
 
-def decrypt_256(state, key):
 
+def decrypt_256(state, key):
     state = addroundkey(state, next(key))
     state = invshiftrows(state)
     state = invsubbytes(state)
@@ -108,9 +108,9 @@ def decrypt_256(state, key):
     return state
 
 
-def addroundkey(state, roundKey):
+def addroundkey(state, roundkey):
     out = []
-    for s_item, k_item in zip(state, roundKey):
+    for s_item, k_item in zip(state, roundkey):
         out.append(s_item ^ k_item)
     return out
 
@@ -133,7 +133,7 @@ def shiftrows(state):
     out = []
     for i in range(0, 13, 4):
         for j in range(0, 16, 5):
-            out.append(state[(j+i) % 16])
+            out.append(state[(j + i) % 16])
     return out
 
 
@@ -157,9 +157,10 @@ def mixcolumns(state):
 
     for i in range(0, 16, 4):
         for _ in range(4):
-            round_out, arr = mul_round(state[i:i+4], arr)
+            round_out, arr = mul_round(state[i:i + 4], arr)
             out.append(round_out)
     return out
+
 
 def invmixcolumns(state):
     def mul_round(vals, arr):
@@ -174,9 +175,6 @@ def invmixcolumns(state):
 
     for i in range(0, 16, 4):
         for _ in range(4):
-            round_out, arr = mul_round(state[i:i+4], arr)
+            round_out, arr = mul_round(state[i:i + 4], arr)
             out.append(round_out)
     return out
-
-
-
