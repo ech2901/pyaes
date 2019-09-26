@@ -3,6 +3,7 @@ from itertools import product, starmap
 
 # TODO comment code
 # TODO remake inverse property of GF class so it isn't a brute force approach
+# TODO Remove need for val property in GF class
 
 class GF(object):
     def __init__(self, val: int):
@@ -15,8 +16,8 @@ class GF(object):
         if type(val) != int:
             raise TypeError(f'Expected <int> input and received a {type(val)}')
 
-        self.int = val
-        self.val = GF._toset_(val)
+        self.int = val  # Used on occasion to short circuit some operations (IE: Multiply by one operation)
+        self.val = GF._toset_(val)  # Currently used to do all the math
 
     @staticmethod
     def _toset_(val):
@@ -33,13 +34,14 @@ class GF(object):
         :param val: int
         :return: set
         """
-        out = set()
-        index = 0
+        out = set()  # Empty set that will be the output
+        index = 0  # What power of 2 we are working on
         while val:
             if val & 1:
-                out.add(index)
-            index = index + 1
-            val = val >> 1
+                # Check if this power of 2 is a 1 or 0
+                out.add(index)  # Add to the output
+            index = index + 1  # Increment which power of 2 we're operating on
+            val = val >> 1  # Shift val to the right once
         return out
 
     @classmethod
@@ -52,25 +54,17 @@ class GF(object):
         :return: GF
         """
         if type(val) != set:
+            # Make sure we're trying to initialize from a set not any other indexible object
             raise TypeError(f'Expected <set> input parameter and recieved a {type(val)}')
 
-        out = GF(0)
+        out = GF(0)  # Base output
         for i in val:
-            if type(i) != int:
+            if type(i) != int:  # Make sure that every item in the set is only an int object
                 raise TypeError(f'Expected <int> input and received a {type(i)}')
-            out.int = out.int | (1 << i)
+            out.int = out.int | (1 << i)  # add each power of 2 to the int object of the output
 
-        out.val = val
+        out.val = val  # Assign the given val object to the output val property
         return out
-
-    @property
-    def hex(self):
-        """
-        return hexstring representation of the int property
-
-        :return: str
-        """
-        return hex(self.int)
 
     @property
     def inverse(self):
@@ -83,10 +77,14 @@ class GF(object):
         """
 
         if self.int == 0:
+            # 0 has no inverse, so return itself
             return self
         if self.int == 1:
+            # Inverse of 1 is 1
             return self
-        modulus = GF(283)
+
+        # Honestly, this is a brute force approach to finding an inverse.
+        # Will replace later with a better solution
         for i in range(2, 256):
             out = GF(i)
             if self.mul(out, modulus).int == 1:
@@ -101,16 +99,24 @@ class GF(object):
         :return: GF
         """
         if type(other) != type(self):
+            # Make sure that we're only operating on GF objects
             raise TypeError
 
         if self.int == 0:
+            # Anything times 0 is zero
             return self
         if other.int == 0:
+            # Anything times 0 is zero
             return other
 
-        out = set()
+        out = set()  # Base output
+        # Get all combinations of these powers of 2
+        # IE: product({0, 1}, {1, 2, 3}) => ((0,1), (0,2), (0,3), (1,1), (1,2), (1,3))
         prod = product(self.val, other.val)
         for val in starmap(lambda a, b: a + b, prod):
+            # Add each value pair together and xor with the output
+            # Continuing from previous example will become
+            # (1, 2, 3, 2, 3, 4) => {1, 4}
             out = out ^ {val}
         return GF.fromset(out)
 
@@ -121,6 +127,8 @@ class GF(object):
         :param other: GF
         :return: GF
         """
+        # Just the xoring of two sets and assigning that to a GF object
+        # IE: {0, 3} ^ {0, 1} => {1, 3} => GF.fromset({1, 3}) == GF(10)
         return GF.fromset(self.val ^ other.val)
 
     def __mod__(self, other):
@@ -130,30 +138,32 @@ class GF(object):
         :param other: GF
         :return: GF
         """
-        def add(addition):
-            out = set()
-            for i in other.val:
-                out = out ^ {i + addition}
-            return out
-
-        if type(other) != type(self):
+        if type(other) != type(self) and type(self) == GF:
+            # Make sure we're working on GF objects
             raise TypeError
 
         if self.int == 0:
+            # 0 modulus anything is zero
             return self
         if other.int == 0:
+            # Technically I should raise a ZeroDivisionError but I don't know how that'll go yet
             return other
 
+
+        # Get the max power of 2 we're working with for both this GF and the other GF
         max1 = max(self.val)
         max2 = max(other.val)
 
-        out = self.val
+        # Start the output is a copy of this GF
+        out = self
 
-        while max1 >= max2:
-            out = out ^ add(max1 - max2)
-            max1 = max(out ^ {-1})
+        while max1 >= max2:  # While this GF is larger than the other
+            # xor values
+            out = out ^ (other * GF.fromset({max1 - max2}))
+            # Check to see largest power of 2 in new output or 0 if an empty set
+            max1 = max(out.val) if len(out.val) else 0
 
-        return GF.fromset(out)
+        return out
 
     def __str__(self):
         """
@@ -166,7 +176,6 @@ class GF(object):
 
         :return: str
         """
-
         return hex(self.int)[2:].rjust(2, "0")
 
     def __eq__(self, other):
