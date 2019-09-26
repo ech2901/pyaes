@@ -1,4 +1,5 @@
 from Field import sbox
+# sbox needed for key expansion
 
 
 def expand_128(key):

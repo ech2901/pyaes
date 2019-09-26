@@ -1,5 +1,5 @@
 from itertools import product, starmap
-
+# itertools functions only used in __mul__ function currently
 
 # TODO comment code
 # TODO remake inverse property of GF class so it isn't a brute force approach
