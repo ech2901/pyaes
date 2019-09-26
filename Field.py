@@ -102,11 +102,13 @@ class GF(object):
             # Make sure that we're only operating on GF objects
             raise TypeError
 
-        if self.int == 0:
+        if self.int == 0 or other.int == 1:
             # Anything times 0 is zero
+            # Anything times 1 is the value
             return self
-        if other.int == 0:
+        if other.int == 0 or self.int == 1:
             # Anything times 0 is zero
+            # Anything times 1 is the value
             return other
 
         out = set()  # Base output
@@ -202,6 +204,20 @@ class GF(object):
 
 
         return (self * other) % modulus
+
+    def rcon(self, rval):
+        """
+        Performs the rcon operation in the key expansion core
+
+
+        :param rval: int
+        :return: GF
+        """
+
+        return self ^ (GF(1 << (rval - 1)) % modulus)
+
+
+
 
 
 def sbox(gf):
