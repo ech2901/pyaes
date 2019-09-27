@@ -86,14 +86,14 @@ def ecb_encrypt(plaintext: bytes, password: bytes, size: int, *, salt: bytes = N
     return out, salt
 
 
-def ecb_decrypt(ciphertext: str, password: bytes, salt: bytes, size: int):
+def ecb_decrypt(ciphertext: str, password: bytes, size: int, salt: bytes):
     """
     Decrypt ciphertext with the Electronic Code Book mode of operation
 
     :param ciphertext: str
     :param password: bytes
-    :param salt: bytes
     :param size: int (must be either 128, 192, or 256)
+    :param salt: bytes
     :return: plaintext: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
     """
@@ -165,8 +165,8 @@ def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = Non
     :param plaintext: bytes
     :param password: bytes
     :param size: int (must be either 128, 192, or 256)
-    :param iv: None (not required)
-    :param salt: None (not required
+    :param iv: bytes (not required but if supplied must be 16 bytes)
+    :param salt: bytes (not required
     :return: ciphertext: string, iv: bytes, salt: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
     """
@@ -176,8 +176,8 @@ def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = Non
 
     if iv is None:
         iv = urandom(16)
-    else:
-        iv = iv + urandom(16 - len(iv))
+    elif len(iv) != 16:
+        raise ValueError
 
     xor_iv = [GF(i) for i in iv]
 
@@ -223,15 +223,15 @@ def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = Non
     return out, iv, salt
 
 
-def cbc_decrypt(ciphertext: str, password: bytes, iv: bytes, salt: bytes, size: int):
+def cbc_decrypt(ciphertext: str, password: bytes, size: int, iv: bytes, salt: bytes):
     """
     Decrypt ciphertext with the Cipher Block Chaining mode of operation
 
     :param ciphertext: str
     :param password: bytes
+    :param size: int (must be either 128, 192, or 256)
     :param iv: bytes
     :param salt: bytes
-    :param size: int (must be either 128, 192, or 256)
     :return: plaintext: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
     """
@@ -288,22 +288,278 @@ def cbc_decrypt(ciphertext: str, password: bytes, iv: bytes, salt: bytes, size: 
     return bytes.fromhex(out)
 
 
+def pcbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = None, salt: bytes = None):
+    """
+    Encrypt plaintext using the Propagating Cipher Block Chaining
+    mode of operation. Slightly more complex mode than CBC.
+
+    :param plaintext: bytes
+    :param password: bytes
+    :param size: int (Must be either 128, 192, or 256)
+    :param iv: bytes (not required but if supplied must be 16 bytes)
+    :param salt: bytes (Can be omitted)
+    :return: ciphertext: bytes, iv: bytes, salt: bytes
+    """
+
+    if salt is None:
+        # If the salt input is not given, generate a random salt of 64 bytes
+        salt = urandom(64)
+
+    if iv is None:
+        # If no supplied iv generate one
+        iv = urandom(16)
+    elif len(iv) != 16:
+        # If a supplied iv is not of the correct size
+        raise ValueError
+    # create list of GF objects to represent the IV
+    xor_iv = [GF(i) for i in iv]
+
+    # Convert bytes object to an list of GF objects
+    plaintext = [GF(i) for i in plaintext]
+
+
+    while len(plaintext) % 16 != 0:
+        # Pads the size of the list to have blocks of length 16
+        plaintext.append(GF(0))
+
+    # Break the plaintext into blocks with 16 elements each
+    blocks = [plaintext[i:i+16] for i in range(0, len(plaintext), 16)]
+
+
+    if size == 128:
+        # For AES-128
+        # Hash password with a salt to a given length of 16 bytes
+        key = phash('sha256', password, salt, 1_000_000, 16)
+        # Expand the key to the required size and set it as a repeating iterable
+        key = iter_key([GF(i) for i in key], 128)
+
+        for index, block in enumerate(blocks):
+            # Get the new iv ready
+            new_iv = block
+
+            for i in range(16):
+                block[i] = block[i] ^ xor_iv[i]
+            # Encrypt each block with the key schedule
+            block = encrypt_128(block, key)
+
+            # Save encrypted block
+            blocks[index] = block
+
+            for i in range(16):
+                # xor each byte of the encrypted block with each byte of the unencrypted block
+                # This creates the new iv for the next block
+                xor_iv[i] = new_iv[i] ^ block[i]
+
+
+    elif size == 192:
+        # For AES-192
+        # Hach password with a salt to a given length of 24 bytes
+        key = phash('sha256', password, salt, 1_000_000, 24)
+        # expand the key to the required size and set it as a repeating iterable
+        key = iter_key([GF(i) for i in key], 192)
+        for index, block in enumerate(blocks):
+            # Get the new iv ready
+            new_iv = block
+
+            for i in range(16):
+                block[i] = block[i] ^ xor_iv[i]
+            # Encrypt each block with the key schedule
+            block = encrypt_192(block, key)
+
+            # Save encrypted block
+            blocks[index] = block
+
+            for i in range(16):
+                # xor each byte of the encrypted block with each byte of the unencrypted block
+                # This creates the new iv for the next block
+                xor_iv[i] = new_iv[i] ^ block[i]
+
+    elif size == 256:
+        # For AES-256
+        # Hach password with a salt to a given length of 32 bytes
+        key = phash('sha256', password, salt, 1_000_000, 32)
+        # expand the key to the required size and set it as a repeating iterable
+        key = iter_key([GF(i) for i in key], 256)
+        for index, block in enumerate(blocks):
+            # Get the new iv ready
+            new_iv = block
+
+            for i in range(16):
+                block[i] = block[i] ^ xor_iv[i]
+
+            # Encrypt each block with the key schedule
+            block = encrypt_256(block, key)
+
+            # Save encrypted block
+            blocks[index] = block
+
+            for i in range(16):
+                # xor each byte of the encrypted block with each byte of the unencrypted block
+                # This creates the new iv for the next block
+                xor_iv[i] = new_iv[i] ^ block[i]
+
+    else:
+        raise ValueError(f'Expected size of either 128, 192, or 256 and recieved {size}')
+
+    out = ''
+    for block in blocks:
+        for item in block:
+            out = out + str(item)
+
+    return out, iv, salt
+
+
+def pcbc_decrypt(ciphertext: str, password: bytes, size: int, iv: bytes, salt: bytes):
+    """
+    Encrypt plaintext using the Propagating Cipher Block Chaining
+    mode of operation.
+
+    :param ciphertext: bytes
+    :param password: bytes
+    :param size: int (Must be either 128, 192, or 256)
+    :param iv: bytes (Must be 16 bytes of data)
+    :param salt: bytes
+    :return: ciphertext: bytes, iv: bytes, salt: bytes
+    """
+
+    if len(iv) != 16:
+        # If a supplied iv is not of the correct size
+        raise ValueError
+
+    # create list of GF objects to represent the IV
+    xor_iv = [GF(i) for i in iv]
+
+    # Convert bytes object to an list of GF objects
+    ciphertext = bytes.fromhex(ciphertext)
+    ciphertext = [GF(i) for i in ciphertext]
+
+    while len(ciphertext) % 16 != 0:
+        # Pads the size of the list to have blocks of length 16
+        ciphertext.append(GF(0))
+
+    # Break the plaintext into blocks with 16 elements each
+    blocks = [ciphertext[i:i + 16] for i in range(0, len(ciphertext), 16)]
+
+    if size == 128:
+        # For AES-128
+        # Hash password with a salt to a given length of 16 bytes
+        key = phash('sha256', password, salt, 1_000_000, 16)
+        # Expand the key to the required size and set it as a repeating iterable
+        key = iter_key([GF(i) for i in key], 128, reverse=True)
+
+        for index, block in enumerate(blocks):
+
+            # Get the new iv ready
+            new_iv = block
+
+            # Encrypt each block with the key schedule
+            block = decrypt_128(block, key)
+
+            for i in range(16):
+                block[i] = block[i] ^ xor_iv[i]
+
+            # Save decrypted block
+            blocks[index] = block
+
+            for i in range(16):
+                # xor each byte of the encrypted block with each byte of the unencrypted block
+                # This creates the new iv for the next block
+                xor_iv[i] = new_iv[i] ^ block[i]
+
+
+    elif size == 192:
+        # For AES-192
+        # Hach password with a salt to a given length of 24 bytes
+        key = phash('sha256', password, salt, 1_000_000, 24)
+        # expand the key to the required size and set it as a repeating iterable
+        key = iter_key([GF(i) for i in key], 192, reverse=True)
+        for index, block in enumerate(blocks):
+            # Get the new iv ready
+            new_iv = block
+
+            # Encrypt each block with the key schedule
+            block = decrypt_192(block, key)
+
+            for i in range(16):
+                block[i] = block[i] ^ xor_iv[i]
+
+            # Save decrypted block
+            blocks[index] = block
+
+            for i in range(16):
+                # xor each byte of the encrypted block with each byte of the unencrypted block
+                # This creates the new iv for the next block
+                xor_iv[i] = new_iv[i] ^ block[i]
+
+    elif size == 256:
+        # For AES-256
+        # Hach password with a salt to a given length of 32 bytes
+        key = phash('sha256', password, salt, 1_000_000, 32)
+        # expand the key to the required size and set it as a repeating iterable
+        key = iter_key([GF(i) for i in key], 256, reverse=True)
+        for index, block in enumerate(blocks):
+            # Get the new iv ready
+            new_iv = block
+
+            # Encrypt each block with the key schedule
+            block = decrypt_256(block, key)
+
+            for i in range(16):
+                block[i] = block[i] ^ xor_iv[i]
+
+            # Save decrypted block
+            blocks[index] = block
+
+            for i in range(16):
+                # xor each byte of the encrypted block with each byte of the unencrypted block
+                # This creates the new iv for the next block
+                xor_iv[i] = new_iv[i] ^ block[i]
+
+    else:
+        raise ValueError(f'Expected size of either 128, 192, or 256 and recieved {size}')
+
+    out = ''
+    for block in blocks:
+        for item in block:
+            out = out + str(item)
+    while out[-2:] == '00':
+        out = out[:-2]
+    return bytes.fromhex(out)
+
+def cfb_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = None, salt: bytes = None):
+    """
+    Close relative of CBC, Cipher Feedback mode turns AES into a
+    self-synchronizing stream cipher
+
+    :param plaintext: bytes
+    :param password: bytes
+    :param size: int (must be either 128, 192, or 256)
+    :param iv: bytes (not required but if supplied must be 16 bytes)
+    :param salt: bytes (Not required)
+    :return: ciphertext: str, iv: bytes, salt: bytes
+    """
+
+def cfb_decrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = None, salt: bytes = None):
+    pass
+
+def ofb_encrypt():
+    pass
+
+def ofb_decrypt():
+    pass
+
+def ctr_encrypt():
+    pass
+
+def ctr_decrypt():
+    pass
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
-    plain = b'test'
-    pwd = b'password'
-    size = 128
-    salt = None
-    iv = None
-
-    ciphertext, iv, salt = cbc_encrypt(plain, pwd, size, iv=iv, salt=salt)
-
-    print(f'Plaintext:   {plain}')
-    print(f'Password:    {pwd}')
-    print(f'Size:        {size}')
-    print(f'IV:          {iv}')
-    print(f'Salt:        {salt}')
-    print(f'Ciphertext:  {ciphertext}')
-
-    new_plain = cbc_decrypt(ciphertext, pwd, iv, salt, size)
-
-    print(f'Decrypted:   {new_plain}')
+    pass
