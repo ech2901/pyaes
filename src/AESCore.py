@@ -29,6 +29,14 @@ def encrypt_128(state: list, key: list):
 
 
 def decrypt_128(state, key):
+    """
+    Decrypt a block of GF instances with the key schedule
+
+    :param state: list
+    :param key: list
+    :return: list
+    """
+
     state = addroundkey(state, next(key))
     state = invshiftrows(state)
     state = invsubbytes(state)
@@ -45,6 +53,14 @@ def decrypt_128(state, key):
 
 
 def encrypt_192(state, key):
+    """
+    Encrypt a block of GF instances with the key schedule
+
+    :param state: list
+    :param key: list
+    :return: list
+    """
+
     state = addroundkey(state, next(key))
 
     for _ in range(11):
@@ -61,6 +77,14 @@ def encrypt_192(state, key):
 
 
 def decrypt_192(state, key):
+    """
+    Decrypt a block of GF instances with the key schedule
+
+    :param state: list
+    :param key: list
+    :return: list
+    """
+
     state = addroundkey(state, next(key))
     state = invshiftrows(state)
     state = invsubbytes(state)
@@ -77,6 +101,13 @@ def decrypt_192(state, key):
 
 
 def encrypt_256(state, key):
+    """
+    Encrypt a block of GF instances with the key schedule
+
+    :param state: list
+    :param key: list
+    :return: list
+    """
     state = addroundkey(state, next(key))
 
     for _ in range(13):
@@ -93,6 +124,14 @@ def encrypt_256(state, key):
 
 
 def decrypt_256(state, key):
+    """
+    Decrypt a block of GF instances with the key schedule
+
+    :param state: list
+    :param key: list
+    :return: list
+    """
+
     state = addroundkey(state, next(key))
     state = invshiftrows(state)
     state = invsubbytes(state)
@@ -109,6 +148,14 @@ def decrypt_256(state, key):
 
 
 def addroundkey(state, roundkey):
+    """
+    Takes two lists of GF objects and xor them together
+
+    :param state: list
+    :param roundkey: list
+    :return: list
+    """
+
     out = []
     for s_item, k_item in zip(state, roundkey):
         out.append(s_item ^ k_item)
@@ -116,6 +163,12 @@ def addroundkey(state, roundkey):
 
 
 def subbytes(state):
+    """
+    Perform the sbox routine on each item in a list of GF objects
+
+    :param state: list
+    :return: list
+    """
     out = []
     for item in state:
         out.append(sbox(item))
@@ -123,6 +176,13 @@ def subbytes(state):
 
 
 def invsubbytes(state):
+    """
+    Perform the inverse sbox routine on each item in a list of GF objects
+
+    :param state: list
+    :return: list
+    """
+
     out = []
     for item in state:
         out.append(invsbox(item))
@@ -130,14 +190,34 @@ def invsubbytes(state):
 
 
 def shiftrows(state):
+    """
+    shift the list according to the following:
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    becomes
+    [0, 5, 10, 15, 4, 9, 14, 3, 8, 13, 2, 7, 12, 1, 6, 11]
+
+    :param state: list
+    :return: list
+    """
+
     out = []
-    for i in range(0, 13, 4):
-        for j in range(0, 16, 5):
-            out.append(state[(j + i) % 16])
+    for i in [0, 5, 10, 15, 4, 9, 14, 3, 8, 13, 2, 7, 12, 1, 6, 11]:
+        out.append(state[i])
     return out
 
 
 def invshiftrows(state):
+    """
+    shift the list according to the following:
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    becomes
+    [0, 13, 10, 7, 4, 1, 14, 11, 8, 5, 2, 15, 12, 9, 6, 3]
+
+    :param state: list
+    :return: list
+    """
+
+
     out = []
     for i in [0, 13, 10, 7, 4, 1, 14, 11, 8, 5, 2, 15, 12, 9, 6, 3]:
         out.append(state[i])

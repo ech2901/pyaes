@@ -17,7 +17,7 @@ class GF(object):
             raise TypeError(f'Expected <int> input and received a {type(val)}')
 
         self.int = val  # Used on occasion to short circuit some operations (IE: Multiply by one operation)
-        self.val = GF._toset_(val)  # Currently used to do all the math
+        self.val = GF._toset_(val)  # Currently used to do all the real math
 
     @staticmethod
     def _toset_(val):
@@ -202,22 +202,7 @@ class GF(object):
         :return: GF
         """
 
-
         return (self * other) % modulus
-
-    def rcon(self, rval):
-        """
-        Performs the rcon operation in the key expansion core
-
-
-        :param rval: int
-        :return: GF
-        """
-
-        return self ^ (GF(1 << (rval - 1)) % modulus)
-
-
-
 
 
 def sbox(gf):
@@ -228,14 +213,17 @@ def sbox(gf):
     :return: GF
     """
     def lrotate(shift):
+        # rotate bits :shift: bits to the left
         lrot = (val << shift) & 0xff
         lrot = lrot | (val >> (8 - shift))
         return lrot
 
+    # Using the inverse of the given GF object
     val = gf.inverse.int
     out = val ^ 0x63
 
     for i in range(1, 5):
+        # repeatedly shift the bits to the left and xor with output
         out = out ^ lrotate(i)
 
     return GF(out)
@@ -249,6 +237,7 @@ def invsbox(gf):
     :return: GF
     """
     def lrotate(shift):
+        # rotate bits :shift: bits to the left
         lrot = (val << shift) & 0xff
         lrot = lrot | (val >> (8 - shift))
         return lrot
@@ -256,10 +245,12 @@ def invsbox(gf):
     val = gf.int
     out = 0x5
 
+    # repeatedly shift the bits to the left and xor with output
     out = out ^ lrotate(1)
     out = out ^ lrotate(3)
     out = out ^ lrotate(6)
 
+    # Return the inverse of the calculated GF object
     return GF(out).inverse
 
 

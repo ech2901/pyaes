@@ -1,4 +1,4 @@
-from src.Field import sbox
+from src.Field import sbox, GF, modulus
 # sbox needed for key expansion
 
 
@@ -101,7 +101,7 @@ def schedule_core(temp, i):
     temp.append(temp.pop(0))  # Circular shift left
     for index, item in enumerate(temp):
         temp[index] = sbox(item)  # Sbox each element
-    temp[0] = temp[0].rcon(i)  # Rcon first element
+    temp[0] = temp[0] ^ (GF(1 << (i - 1)) % modulus)
     return temp
 
 
