@@ -1,7 +1,7 @@
 import unittest
 
-from Field import GF
-from Key import expand_128, expand_192, expand_256
+from src.Field import GF
+from src.Key import expand_128, expand_192, expand_256
 
 
 # TODO comment code

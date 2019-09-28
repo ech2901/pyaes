@@ -1,6 +1,6 @@
 import unittest
 
-from AES import ecb_encrypt, ecb_decrypt, cbc_encrypt, cbc_decrypt, pcbc_encrypt, pcbc_decrypt
+from src.AES import ecb_encrypt, ecb_decrypt, cbc_encrypt, cbc_decrypt, pcbc_encrypt, pcbc_decrypt
 
 
 class TestECB(unittest.TestCase):

@@ -1,4 +1,4 @@
-from Field import sbox
+from src.Field import sbox
 # sbox needed for key expansion
 
 

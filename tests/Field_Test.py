@@ -1,7 +1,7 @@
 import unittest
 
-from Field import GF, modulus
-from Field import sbox, invsbox
+from src.Field import GF, modulus
+from src.Field import sbox, invsbox
 
 
 # TODO comment code
