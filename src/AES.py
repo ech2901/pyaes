@@ -292,6 +292,7 @@ def pcbc_decrypt(blocks, key, xor_iv, dec_func):
 
     return blocks
 
+
 @encrypt_decorator(stream=True)
 def cfb_stream(blocks, key, salt, iv, func):
     """
@@ -318,29 +319,31 @@ def cfb_stream(blocks, key, salt, iv, func):
 
     return blocks, iv, salt
 
-    out = ''
-    for block in blocks:
-        for item in block:
-            out = out + str(item)
 
-    return out, iv, salt
+@encrypt_decorator(stream=True)
+def ofb_stream(blocks, key, salt, iv, func):
 
 
+    xor_iv = iv.copy()
+    for index, block in enumerate(blocks):
+        xor_iv = func(xor_iv, key)
+        for i in range(16):
+            block[i] = block[i] ^ xor_iv[i]
+        blocks[index] = block
 
-def ofb_encrypt():
-    pass
-
-
-def ofb_decrypt():
-    pass
-
-
-def ctr_encrypt():
-    pass
+    return blocks, salt, iv
 
 
-def ctr_decrypt():
-    pass
+@encrypt_decorator(stream=True)
+def ctr_stream(blocks, key, salt, iv, func):
+
+    xor_iv = iv.copy()
+
+    for index, block in enumerate(blocks):
+        ctr_iv = [GF(i) ^ x_item for i, x_item in zip(index.to_bytes(16, 'big'), xor_iv)]
+        blocks[index] = [b_item ^ ctr_item for b_item, ctr_item in zip(block, func(ctr_iv, key))]
+
+    return blocks, salt, iv
 
 
 if __name__ == '__main__':
