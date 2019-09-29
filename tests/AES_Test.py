@@ -1,7 +1,7 @@
 import unittest
 
 from src.AES import cbc_encrypt, cbc_decrypt
-from src.AES import cfb_encrypt, cfb_decrypt
+from src.AES import cfb_stream
 from src.AES import ecb_encrypt, ecb_decrypt
 from src.AES import pcbc_encrypt, pcbc_decrypt
 
@@ -135,11 +135,11 @@ class TestCFB(unittest.TestCase):
         iv = b'this is a bad IV'
         salt = b'No salt please'
 
-        ciphertext, _, _ = cfb_encrypt(plaintext, password, size, iv=iv, salt=salt)
+        ciphertext, _, _ = cfb_stream(plaintext, password, size, iv=iv, salt=salt)
 
-        new_plaintext = cfb_decrypt(ciphertext, password, size, iv=iv, salt=salt)
+        new_plaintext = cfb_stream(ciphertext, password, size, iv=iv, salt=salt)
 
-        self.assertEqual(plaintext, bytes.fromhex(new_plaintext))
+        self.assertEqual(plaintext, new_plaintext)
 
     def test_192_base(self):
         plaintext = b'Hello, world!'
@@ -148,9 +148,9 @@ class TestCFB(unittest.TestCase):
         iv = b'this is a bad IV'
         salt = b'No salt please'
 
-        ciphertext, _, _ = cfb_encrypt(plaintext, password, size, iv=iv, salt=salt)
+        ciphertext, _, _ = cfb_stream(plaintext, password, size, iv=iv, salt=salt)
 
-        new_plaintext = cfb_decrypt(ciphertext, password, size, iv=iv, salt=salt)
+        new_plaintext = cfb_stream(ciphertext, password, size, iv=iv, salt=salt)
 
         self.assertEqual(plaintext, new_plaintext)
 
@@ -161,8 +161,8 @@ class TestCFB(unittest.TestCase):
         iv = b'this is a bad IV'
         salt = b'No salt please'
 
-        ciphertext, _, _ = cfb_encrypt(plaintext, password, size, iv=iv, salt=salt)
+        ciphertext, _, _ = cfb_stream(plaintext, password, size, iv=iv, salt=salt)
 
-        new_plaintext = cfb_decrypt(ciphertext, password, size, iv=iv, salt=salt)
+        new_plaintext = cfb_stream(ciphertext, password, size, iv=iv, salt=salt)
 
         self.assertEqual(plaintext, new_plaintext)

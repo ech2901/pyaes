@@ -1,5 +1,6 @@
 # Import base encryption and decryption functions
 # Import pbkdf2_hmac to generage passwords of a fixed size based on inputs
+from functools import wraps
 from hashlib import pbkdf2_hmac as phash
 # Import urandom to get cryptographically secure random bytes
 from os import urandom
@@ -17,76 +18,118 @@ from src.Key import iter_key
 # TODO finish commenting code
 # TODO Create other block cipher operating modes
 
-def parser(*, password, size, reverse=False,  **kwargs):
-    """
-    Helper function to reduce repeated code
+def encrypt_decorator(*, stream=False):
+    def func_wrapper(func):
+        @wraps(func)
+        def wrapper(plaintext, password, size, *, iv=None, salt=None):
 
-    :param plaintext: bytes; keyword; adds a list of GF objects to the output
-    :param ciphertext: string; keyword; adds a list of GF objects to the output
-    :param password: bytes; keyword; adds a iter_key object to the output
-    :param size: int; keyword; does not directly contribute to the output
-    :param iv: bytes; keyword; adds a list of GF objects to the output
-    :param salt: bytes; keyword; does not directly contribute to the output
-    :param reverse: bool; keyword; True for most modes of decrypting
-
-
-    :return: tuple
-    """
-
-    out = []
-
-    if 'plaintext' in kwargs:
-        plaintext = [GF(i) for i in kwargs['plaintext']]
-        while len(plaintext) % 16 != 0:
-            # Pad at end of plaintext to make sure it always has blocks with 16 bytes of data
-            plaintext.append(GF(0))
-        # Add a list of list objects that represent 16 byte blocks of data
-        out.append([plaintext[i:i + 16] for i in range(0, len(plaintext), 16)])
-
-    if 'ciphertext' in kwargs:
-        ciphertext = bytes.fromhex(kwargs['ciphertext'])
-        if len(ciphertext) % 16 != 0:
-            # Ciphertext must always have blocks with 16 bytes of data
-            raise ValueError
-        ciphertext = [GF(i) for i in ciphertext]
-        # Add a list of list objects that represent 16 byte blocks of data
-        out.append([ciphertext[i:i + 16] for i in range(0, len(ciphertext), 16)])
-
-
-    salt = kwargs.get('salt', urandom(64))
-    if salt is None:
-        salt = urandom(64)
-
-    key = phash('sha256', password, salt, 1_000_000, size / 8)
-    out.append(iter_key([GF(i) for i in key], size, reverse=reverse))
+            output_bytes = (type(plaintext) == str)
+            if stream and output_bytes:
+                # In the case of a stream cipher, like CFB mode
+                # The input can be a hex value in a string because
+                # We're trying to decrypt it.
+                plaintext = bytes.fromhex(plaintext)
 
 
 
+            plaintext = [GF(i) for i in plaintext]
+            while len(plaintext) % 16 != 0:
+                # Pad at end of plaintext to make sure it always has blocks with 16 bytes of data
+                plaintext.append(GF(0))
+            # Add a list of list objects that represent 16 byte blocks of data
+            blocks = [plaintext[i:i + 16] for i in range(0, len(plaintext), 16)]
+
+            if salt is None:
+                salt = urandom(64)
+
+            key = iter_key([GF(i) for i in phash('sha256', password, salt, 1_000_000, size / 8)], size)
+
+            if iv is None:
+                iv = [GF(i) for i in urandom(16)]
+            elif len(iv) != 16:
+                raise ValueError
+            else:
+                iv = [GF(i) for i in iv]
 
 
-    if 'iv' in kwargs:
-        iv = kwargs.get('iv', urandom(16))
-        if iv is None:
-            iv = urandom(16)
-        elif len(iv) != 16:
-            raise ValueError
-        out.append([GF(i) for i in iv])
+            if size == 128:
+                enc_func = encrypt_128
+            elif size == 192:
+                enc_func = encrypt_192
+            elif size == 256:
+                enc_func = encrypt_256
+            else:
+                raise ValueError
 
-    out.append(salt)
+            enc_blocks, *outputs = func(blocks, key, salt, iv, enc_func)
 
-    if size == 128:
-        out.append(decrypt_128 if reverse else encrypt_128)
-    elif size == 192:
-        out.append(decrypt_192 if reverse else encrypt_192)
-    elif size == 256:
-        out.append(decrypt_256 if reverse else encrypt_256)
-    else:
-        raise ValueError
-
-    return out
+            out = ''
+            for block in enc_blocks:
+                for item in block:
+                    if output_bytes and item.int == 0:
+                        continue
+                    out = out + str(item)
 
 
-def ecb_encrypt(plaintext: bytes, password: bytes, size: int, *, salt: bytes = None):
+            if output_bytes:
+                return bytes.fromhex(out)
+
+            return (out, *outputs)
+
+        return wrapper
+    return func_wrapper
+
+
+def decrypt_decorator(*, req_iv=True, reverse=True):
+    def func_wrapper(func):
+        @wraps(func)
+        def wrapper(ciphertext, password, size, *, iv=None, salt=None):
+
+            ciphertext = bytes.fromhex(ciphertext)
+            if len(ciphertext) % 16 != 0:
+                # Ciphertext must always have blocks with 16 bytes of data
+                raise ValueError
+            ciphertext = [GF(i) for i in ciphertext]
+            # Add a list of list objects that represent 16 byte blocks of data
+            blocks = [ciphertext[i:i + 16] for i in range(0, len(ciphertext), 16)]
+
+            key = iter_key([GF(i) for i in phash('sha256', password, salt, 1_000_000, size / 8)], size, reverse=reverse)
+
+            if req_iv:
+                if iv is None or len(iv) != 16:
+                    raise ValueError
+                else:
+                    iv = [GF(i) for i in iv]
+
+            # Determine which AES key size we will decrypt in
+            # or raise a Value Error if it's not a useable size
+            if size == 128:
+                dec_func = decrypt_128
+            elif size == 192:
+                dec_func = decrypt_192
+            elif size == 256:
+                dec_func = decrypt_256
+            else:
+                raise ValueError
+
+            dec_blocks = func(blocks, key, iv, dec_func)
+
+            out = ''
+            for block in dec_blocks:
+                for item in block:
+                    # For every item of every block convert to a string and append to an output string
+                    if item.int == 0:
+                        continue
+                    out = out + str(item)
+
+            return bytes.fromhex(out)
+
+        return wrapper
+    return func_wrapper
+
+
+@encrypt_decorator()
+def ecb_encrypt(blocks, key, salt, iv, enc_func):
     """
     Encrypt plaintext with the Electronic Code Book mode of operation
 
@@ -98,21 +141,13 @@ def ecb_encrypt(plaintext: bytes, password: bytes, size: int, *, salt: bytes = N
     :raise: ValueError: if size is not either 128, 192, or 256
     """
 
-    blocks, key, salt, enc_func = parser(plaintext=plaintext, password=password, size=size, salt=salt)
-
     for index, block in enumerate(blocks):
         blocks[index] = enc_func(block, key)
-
-    out = ''
-    for block in blocks:
-        for item in block:
-            # Take each item of each block, convert to a string, and append to a string output
-            out = out + str(item)
-
-    return out, salt
+    return blocks, salt
 
 
-def ecb_decrypt(ciphertext: str, password: bytes, size: int, salt: bytes):
+@decrypt_decorator(req_iv=False)
+def ecb_decrypt(blocks, key, _, dec_func):
     """
     Decrypt ciphertext with the Electronic Code Book mode of operation
 
@@ -124,25 +159,17 @@ def ecb_decrypt(ciphertext: str, password: bytes, size: int, salt: bytes):
     :raise: ValueError: if size is not either 128, 192, or 256
     """
 
-    blocks, key, _, dec_func = parser(ciphertext=ciphertext, password=password, size=size, salt=salt, reverse=True)
+    # blocks, key, _, dec_func = parser(ciphertext=ciphertext, password=password, size=size, salt=salt, reverse=True)
 
     for index, block in enumerate(blocks):
         # Encrypt each block with the key schedule
         blocks[index] = dec_func(block, key)
 
-    out = ''
-    for block in blocks:
-        for item in block:
-            # For every item of every block convert to a string and append to an output string
-            out = out + str(item)
-
-    while out[-2:] == '00':
-        # Remove trailing 0 bits added during encryption
-        out = out[:-2]
-    return bytes.fromhex(out)
+    return blocks
 
 
-def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = None, salt: bytes = None):
+@encrypt_decorator()
+def cbc_encrypt(blocks, key, salt, iv, enc_func):
     """
     Encrypt plaintext with the Cipher Block Chaining mode of operation
 
@@ -155,7 +182,6 @@ def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = Non
     :raise: ValueError: if size is not either 128, 192, or 256
     """
 
-    blocks, key, iv, salt, enc_func = parser(plaintext=plaintext, password=password, size=size, iv=iv, salt=salt)
 
     xor_iv = iv.copy()
 
@@ -166,15 +192,11 @@ def cbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = Non
         # New iv is the encrypted block
         blocks[index] = xor_iv
 
-    out = ''
-    for block in blocks:
-        for item in block:
-            out = out + str(item)
-
-    return out, iv, salt
+    return blocks, iv, salt
 
 
-def cbc_decrypt(ciphertext: str, password: bytes, size: int, iv: bytes, salt: bytes):
+@decrypt_decorator()
+def cbc_decrypt(blocks, key, xor_iv, dec_func):
     """
     Decrypt ciphertext with the Cipher Block Chaining mode of operation
 
@@ -187,8 +209,6 @@ def cbc_decrypt(ciphertext: str, password: bytes, size: int, iv: bytes, salt: by
     :raise: ValueError: if size is not either 128, 192, or 256
     """
 
-    blocks, key, xor_iv, _, dec_func = parser(ciphertext=ciphertext, password=password, size=size, iv=iv, salt=salt,
-                                              reverse=True)
     for index, block in enumerate(blocks):
         # Get the new iv ready
         next_iv = block
@@ -199,16 +219,10 @@ def cbc_decrypt(ciphertext: str, password: bytes, size: int, iv: bytes, salt: by
         # Assign new iv
         xor_iv = next_iv
 
-    out = ''
-    for block in blocks:
-        for item in block:
-            out = out + str(item)
-    while out[-2:] == '00':
-        out = out[:-2]
-    return bytes.fromhex(out)
+    return blocks
 
-
-def pcbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = None, salt: bytes = None):
+@encrypt_decorator()
+def pcbc_encrypt(blocks, key, salt, iv, enc_func):
     """
     Encrypt plaintext using the Propagating Cipher Block Chaining
     mode of operation. Slightly more complex mode than CBC.
@@ -220,8 +234,6 @@ def pcbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = No
     :param salt: bytes (Can be omitted)
     :return: ciphertext: bytes, iv: bytes, salt: bytes
     """
-
-    blocks, key, iv, salt, enc_func = parser(plaintext=plaintext, password=password, size=size, iv=iv, salt=salt)
 
     xor_iv = iv.copy()
 
@@ -242,16 +254,11 @@ def pcbc_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = No
             # This creates the new iv for the next block
             xor_iv[i] = new_iv[i] ^ block[i]
 
-
-    out = ''
-    for block in blocks:
-        for item in block:
-            out = out + str(item)
-
-    return out, iv, salt
+    return blocks, iv, salt
 
 
-def pcbc_decrypt(ciphertext: str, password: bytes, size: int, iv: bytes, salt: bytes):
+@decrypt_decorator()
+def pcbc_decrypt(blocks, key, xor_iv, dec_func):
     """
     Encrypt plaintext using the Propagating Cipher Block Chaining
     mode of operation.
@@ -263,9 +270,6 @@ def pcbc_decrypt(ciphertext: str, password: bytes, size: int, iv: bytes, salt: b
     :param salt: bytes
     :return: ciphertext: bytes, iv: bytes, salt: bytes
     """
-
-    blocks, key, xor_iv, _, dec_func = parser(ciphertext=ciphertext, password=password, size=size, iv=iv, salt=salt,
-                                              reverse=True)
 
     for index, block in enumerate(blocks):
 
@@ -286,38 +290,33 @@ def pcbc_decrypt(ciphertext: str, password: bytes, size: int, iv: bytes, salt: b
             # This creates the new iv for the next block
             xor_iv[i] = new_iv[i] ^ block[i]
 
-    out = ''
-    for block in blocks:
-        for item in block:
-            out = out + str(item)
-    while out[-2:] == '00':
-        out = out[:-2]
-    return bytes.fromhex(out)
+    return blocks
 
-
-def cfb_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = None, salt: bytes = None):
+@encrypt_decorator(stream=True)
+def cfb_stream(blocks, key, salt, iv, func):
     """
-    Encrypt plaintext with the Cipher Block Chaining mode of operation
+    Encrypt and decrypt data with the Cipher Block Chaining mode of operation
 
-    :param plaintext: bytes
+    :param plaintext: bytes for encryption; str for decryption
     :param password: bytes
     :param size: int (must be either 128, 192, or 256)
-    :param iv: bytes (not required but if supplied must be 16 bytes)
-    :param salt: bytes (not required
-    :return: ciphertext: string, iv: bytes, salt: bytes
+    :param iv: bytes (not required if encrypting but if supplied must be 16 bytes)
+    :param salt: bytes (not required if encrypting)
+    :return: if encrypting: ciphertext: string, iv: bytes, salt: bytes
+    :return: if decrypting: plaintext: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
     """
-
-    blocks, key, iv, salt, enc_func = parser(plaintext=plaintext, password=password, size=size, iv=iv, salt=salt)
 
     enc_iv = iv.copy()
 
     for index, block in enumerate(blocks):
-        for i, p_item, c_item in zip(range(16), block, enc_func(enc_iv, key)):
+        for i, p_item, c_item in zip(range(16), block, func(enc_iv, key)):
             block[i] = p_item ^ c_item
 
         enc_iv = block
         blocks[index] = block
+
+    return blocks, iv, salt
 
     out = ''
     for block in blocks:
@@ -326,27 +325,6 @@ def cfb_encrypt(plaintext: bytes, password: bytes, size: int, *, iv: bytes = Non
 
     return out, iv, salt
 
-
-def cfb_decrypt(ciphertext: str, password: bytes, size: int, iv: bytes, salt: bytes):
-    """
-        Decrypt ciphertext with the Cipher Feedback mode of operation.
-        Basically same as encrypting with this mode, just slightly different due to
-        the types of parameters given.
-
-        :param ciphertext: str
-        :param password: bytes
-        :param size: int (must be either 128, 192, or 256)
-        :param iv: bytes
-        :param salt: bytes
-        :return: plaintext: bytes
-        :raise: ValueError: if size is not either 128, 192, or 256
-        """
-
-    out, _, _ = cfb_encrypt(bytes.fromhex(ciphertext), password, size, iv=iv, salt=salt)
-
-    while out[-2:] == '00':
-        out = out[:-2]
-    return out
 
 
 def ofb_encrypt():
