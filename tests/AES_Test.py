@@ -139,7 +139,7 @@ class TestCFB(unittest.TestCase):
 
         new_plaintext = cfb_decrypt(ciphertext, password, size, iv=iv, salt=salt)
 
-        self.assertEqual(plaintext, new_plaintext)
+        self.assertEqual(plaintext, bytes.fromhex(new_plaintext))
 
     def test_192_base(self):
         plaintext = b'Hello, world!'
