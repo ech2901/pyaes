@@ -1,8 +1,7 @@
 # itertools functions only used in __mul__ function currently
 
-# TODO comment code
 # TODO remake inverse property of GF class so it isn't a brute force approach
-# TODO Remove need for val property in GF class
+
 
 class GF(object):
     def __init__(self, val: int):
