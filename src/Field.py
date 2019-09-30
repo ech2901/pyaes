@@ -1,4 +1,3 @@
-from itertools import product, starmap
 # itertools functions only used in __mul__ function currently
 
 # TODO comment code
@@ -15,9 +14,10 @@ class GF(object):
 
         if type(val) != int:
             raise TypeError(f'Expected <int> input and received a {type(val)}')
+        elif val < 0:
+            raise ValueError
 
         self.int = val  # Used on occasion to short circuit some operations (IE: Multiply by one operation)
-        self.val = GF._toset_(val)  # Currently used to do all the real math
 
     @staticmethod
     def _toset_(val):
@@ -44,27 +44,6 @@ class GF(object):
             val = val >> 1  # Shift val to the right once
         return out
 
-    @classmethod
-    def fromset(cls, val):
-        """
-        Convert param val into it's int representation
-        and assign class properties appropriately
-
-        :param val: set
-        :return: GF
-        """
-        if type(val) != set:
-            # Make sure we're trying to initialize from a set not any other indexible object
-            raise TypeError(f'Expected <set> input parameter and recieved a {type(val)}')
-
-        out = GF(0)  # Base output
-        for i in val:
-            if type(i) != int:  # Make sure that every item in the set is only an int object
-                raise TypeError(f'Expected <int> input and received a {type(i)}')
-            out.int = out.int | (1 << i)  # add each power of 2 to the int object of the output
-
-        out.val = val  # Assign the given val object to the output val property
-        return out
 
     @property
     def inverse(self):
@@ -111,16 +90,20 @@ class GF(object):
             # Anything times 1 is the value
             return other
 
-        out = set()  # Base output
-        # Get all combinations of these powers of 2
-        # IE: product({0, 1}, {1, 2, 3}) => ((0,1), (0,2), (0,3), (1,1), (1,2), (1,3))
-        prod = product(self.val, other.val)
-        for val in starmap(lambda a, b: a + b, prod):
-            # Add each value pair together and xor with the output
-            # Continuing from previous example will become
-            # (1, 2, 3, 2, 3, 4) => {1, 4}
-            out = out ^ {val}
-        return GF.fromset(out)
+        # Can not be simple multiplication as
+        # some will not correctly accumulate value
+        # IE: GF(14) * GF(112) == GF(1568)
+        # however, 14 * 112 == 672
+
+        out = 0  # Placeholder for the output
+        test_val = 1  # So we don't keep recalculating things as much
+        for i in range(other.int.bit_length()):
+            if other.int & test_val:
+                out = out ^ self.int << i
+
+            test_val = test_val << 1
+
+        return GF(out)
 
     def __xor__(self, other):
         """
@@ -129,9 +112,8 @@ class GF(object):
         :param other: GF
         :return: GF
         """
-        # Just the xoring of two sets and assigning that to a GF object
-        # IE: {0, 3} ^ {0, 1} => {1, 3} => GF.fromset({1, 3}) == GF(10)
-        return GF.fromset(self.val ^ other.val)
+        # Just the xoring of two ints
+        return GF(self.int ^ other.int)
 
     def __mod__(self, other):
         """
@@ -151,21 +133,18 @@ class GF(object):
             # Technically I should raise a ZeroDivisionError but I don't know how that'll go yet
             return other
 
+        max1 = self.int.bit_length()
+        max2 = other.int.bit_length()
 
-        # Get the max power of 2 we're working with for both this GF and the other GF
-        max1 = max(self.val)
-        max2 = max(other.val)
+        out = self.int
 
-        # Start the output is a copy of this GF
-        out = self
+        while out.bit_length() >= other.int.bit_length():
 
-        while max1 >= max2:  # While this GF is larger than the other
-            # xor values
-            out = out ^ (other * GF.fromset({max1 - max2}))
-            # Check to see largest power of 2 in new output or 0 if an empty set
-            max1 = max(out.val) if len(out.val) else 0
+            out = out ^ (other.int << (max1 - max2))
+            max1 = out.bit_length()
 
-        return out
+        return GF(out)
+
 
     def __str__(self):
         """
@@ -189,7 +168,6 @@ class GF(object):
         """
         out = True and type(self) == type(other)
         out = out and self.int == other.int
-        out = out and self.val ^ other.val == set()
 
         return out
 
@@ -203,6 +181,9 @@ class GF(object):
         """
 
         return (self * other) % modulus
+
+    def __repr__(self):
+        return f'{self.int}'
 
 
 def sbox(gf):
