@@ -215,3 +215,14 @@ class TestCTR(unittest.TestCase):
 
         self.assertEqual(self.plaintext, new_plaintext)
 
+if __name__ == '__main__':
+    AES_Suite = unittest.TestSuite()
+
+    AES_Suite.addTest(TestECB())
+    AES_Suite.addTest(TestCBC())
+    AES_Suite.addTest(TestPCBC())
+    AES_Suite.addTest(TestCFB())
+    AES_Suite.addTest(TestOFB())
+    AES_Suite.addTest(TestCTR())
+
+    AES_Suite.run(unittest.TestResult())
