@@ -43,6 +43,16 @@ class TestFieldMethods(unittest.TestCase):
             for b in param_b:
                 self.assertRaises(Exception, GF(a).__mul__, b)
 
+    def test_floordiv_nofail(self):
+        param_a = (0, 1, 2, 1, 3, 4, 15, 283)
+        param_b = (1, 1, 1, 2, 2, 2, 5, 5)
+        param_c = (0, 1, 2, 0, 1, 2, 3, 82)
+        for a, b, c in zip(param_a, param_b, param_c):
+            self.assertEqual(GF(a) // GF(b), GF(c))
+
+    def test_floordiv_fail(self):
+        pass
+
     def test_mod_nofail(self):
         param_a = (0, 1, 15, 213)
         param_b = (1, 24, 5, 24)

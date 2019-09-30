@@ -115,6 +115,38 @@ class GF(object):
         # Just the xoring of two ints
         return GF(self.int ^ other.int)
 
+    def __floordiv__(self, other):
+        """
+        calculate the quotient of two GF objects
+
+        :param other: GF
+        :return: GF
+        """
+        if type(other) != type(self) and type(self) == GF:
+            # Make sure we're working on GF objects
+            raise TypeError
+
+        if self.int == 0:
+            # 0 divided anything is zero
+            return self
+        if other.int == 0:
+            # Technically I should raise a ZeroDivisionError but I don't know how that'll go yet
+            return other
+
+        max1 = self.int.bit_length()
+        max2 = other.int.bit_length()
+
+        temp = self.int
+        out = 0
+
+        while temp.bit_length() >= other.int.bit_length():
+
+            out = out | 1 << (max1 - max2)
+            temp = temp ^ (other.int << (max1 - max2))
+            max1 = temp.bit_length()
+
+        return GF(out)
+
     def __mod__(self, other):
         """
         calculate the modulus of two GF objects
