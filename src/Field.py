@@ -217,19 +217,13 @@ def invsbox(gf):
     :param gf: GF
     :return: GF
     """
-    def lrotate(shift):
-        # rotate bits :shift: bits to the left
-        lrot = (val << shift) & 0xff
-        lrot = lrot | (val >> (8 - shift))
-        return lrot
 
     val = gf.int
     out = 0x5
 
     # repeatedly shift the bits to the left and xor with output
-    out = out ^ lrotate(1)
-    out = out ^ lrotate(3)
-    out = out ^ lrotate(6)
+    for i in [1, 3, 6]:
+        out = out ^ (((val << i) & 0xff) | (val >> (8 - i)))
 
     # Return the inverse of the calculated GF object
     return GF(out).inverse
