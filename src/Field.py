@@ -15,34 +15,9 @@ class GF(object):
         if type(val) != int:
             raise TypeError(f'Expected <int> input and received a {type(val)}')
         elif val < 0:
-            raise ValueError
+            raise ValueError(f'Expected positive integer and recieved {val}')
 
-        self.int = val  # Used on occasion to short circuit some operations (IE: Multiply by one operation)
-
-    @staticmethod
-    def _toset_(val):
-        """
-        Break down val into powers of 2
-        IE:
-
-        input: 5
-        output: {0, 2} # (2^2)+(2^0) = 5
-
-        input: 30
-        output: {1, 2, 3, 4} # (2^4)+(2^3)+(2^2)+(2^1) = 30
-
-        :param val: int
-        :return: set
-        """
-        out = set()  # Empty set that will be the output
-        index = 0  # What power of 2 we are working on
-        while val:
-            if val & 1:
-                # Check if this power of 2 is a 1 or 0
-                out.add(index)  # Add to the output
-            index = index + 1  # Increment which power of 2 we're operating on
-            val = val >> 1  # Shift val to the right once
-        return out
+        self.int = val
 
 
     @property
@@ -79,7 +54,7 @@ class GF(object):
         """
         if type(other) != type(self):
             # Make sure that we're only operating on GF objects
-            raise TypeError
+            raise TypeError(f'Expected <GF> input and received a {type(other)}')
 
         if self.int == 0 or other.int == 1:
             # Anything times 0 is zero
@@ -198,10 +173,9 @@ class GF(object):
         :param other: GF
         :return: bool
         """
-        out = True and type(self) == type(other)
-        out = out and self.int == other.int
-
-        return out
+        if type(other) != GF:
+            return False
+        return self.int == other.int
 
     def mul(self, other, modulus):
         """
@@ -225,11 +199,6 @@ def sbox(gf):
     :param gf: GF
     :return: GF
     """
-    def lrotate(shift):
-        # rotate bits :shift: bits to the left
-        lrot = (val << shift) & 0xff
-        lrot = lrot | (val >> (8 - shift))
-        return lrot
 
     # Using the inverse of the given GF object
     val = gf.inverse.int
@@ -237,7 +206,7 @@ def sbox(gf):
 
     for i in range(1, 5):
         # repeatedly shift the bits to the left and xor with output
-        out = out ^ lrotate(i)
+        out = out ^ (((val << i) & 0xff) | (val >> (8 - i)))
 
     return GF(out)
 
