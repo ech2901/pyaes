@@ -23,8 +23,8 @@ def encrypt_decorator(*, stream=False):
         @wraps(func)
         def wrapper(plaintext, password, size, *, iv=None, salt=None):
 
-            output_bytes = (type(plaintext) == str)
-            if stream and output_bytes:
+            output_bytes = stream and (type(plaintext) == str)
+            if output_bytes:
                 # In the case of a stream cipher, like CFB mode
                 # The input can be a hex value in a string because
                 # We're trying to decrypt it.
@@ -221,6 +221,7 @@ def cbc_decrypt(blocks, key, xor_iv, dec_func):
 
     return blocks
 
+
 @encrypt_decorator()
 def pcbc_encrypt(blocks, key, salt, iv, enc_func):
     """
@@ -298,7 +299,7 @@ def cfb_stream(blocks, key, salt, iv, func):
     """
     Encrypt and decrypt data with the Cipher Block Chaining mode of operation
 
-    :param plaintext: bytes for encryption; str for decryption
+    :param state: bytes for encryption; str for decryption
     :param password: bytes
     :param size: int (must be either 128, 192, or 256)
     :param iv: bytes (not required if encrypting but if supplied must be 16 bytes)
@@ -322,6 +323,18 @@ def cfb_stream(blocks, key, salt, iv, func):
 
 @encrypt_decorator(stream=True)
 def ofb_stream(blocks, key, salt, iv, func):
+    """
+    Encrypt and decrypt data with the Cipher Block Chaining mode of operation
+
+    :param state: bytes for encryption; str for decryption
+    :param password: bytes
+    :param size: int (must be either 128, 192, or 256)
+    :param iv: bytes (not required if encrypting but if supplied must be 16 bytes)
+    :param salt: bytes (not required if encrypting)
+    :return: if encrypting: ciphertext: string, iv: bytes, salt: bytes
+    :return: if decrypting: plaintext: bytes
+    :raise: ValueError: if size is not either 128, 192, or 256
+    """
 
 
     xor_iv = iv.copy()
@@ -336,6 +349,18 @@ def ofb_stream(blocks, key, salt, iv, func):
 
 @encrypt_decorator(stream=True)
 def ctr_stream(blocks, key, salt, iv, func):
+    """
+    Encrypt and decrypt data with the Cipher Block Chaining mode of operation
+
+    :param state: bytes for encryption; str for decryption
+    :param password: bytes
+    :param size: int (must be either 128, 192, or 256)
+    :param iv: bytes (not required if encrypting but if supplied must be 16 bytes)
+    :param salt: bytes (not required if encrypting)
+    :return: if encrypting: ciphertext: string, iv: bytes, salt: bytes
+    :return: if decrypting: plaintext: bytes
+    :raise: ValueError: if size is not either 128, 192, or 256
+    """
 
     xor_iv = iv.copy()
 
