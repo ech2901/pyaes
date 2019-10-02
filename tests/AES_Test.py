@@ -16,7 +16,7 @@ class TestECB(unittest.TestCase):
     def test_128_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _ = ecb_encrypt(self.plaintext, self.password, 128, salt=self.salt)
+        ciphertext, *_ = ecb_encrypt(self.plaintext, self.password, 128, salt=self.salt)
 
         new_plaintext = ecb_decrypt(ciphertext, self.password, 128, salt=self.salt)
 
@@ -25,7 +25,7 @@ class TestECB(unittest.TestCase):
     def test_192_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _ = ecb_encrypt(self.plaintext, self.password, 192, salt=self.salt)
+        ciphertext, *_ = ecb_encrypt(self.plaintext, self.password, 192, salt=self.salt)
 
         new_plaintext = ecb_decrypt(ciphertext, self.password, 192, salt=self.salt)
 
@@ -34,7 +34,7 @@ class TestECB(unittest.TestCase):
     def test_256_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _ = ecb_encrypt(self.plaintext, self.password, 256, salt=self.salt)
+        ciphertext, *_ = ecb_encrypt(self.plaintext, self.password, 256, salt=self.salt)
 
         new_plaintext = ecb_decrypt(ciphertext, self.password, 256, salt=self.salt)
 
@@ -51,7 +51,7 @@ class TestCBC(unittest.TestCase):
     def test_128_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = cbc_encrypt(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = cbc_encrypt(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
 
         new_plaintext = cbc_decrypt(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
 
@@ -60,7 +60,7 @@ class TestCBC(unittest.TestCase):
     def test_192_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = cbc_encrypt(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = cbc_encrypt(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
 
         new_plaintext = cbc_decrypt(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
 
@@ -69,7 +69,7 @@ class TestCBC(unittest.TestCase):
     def test_256_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = cbc_encrypt(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = cbc_encrypt(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
 
         new_plaintext = cbc_decrypt(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
 
@@ -86,7 +86,7 @@ class TestPCBC(unittest.TestCase):
     def test_128_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = pcbc_encrypt(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = pcbc_encrypt(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
 
         new_plaintext = pcbc_decrypt(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
 
@@ -95,7 +95,7 @@ class TestPCBC(unittest.TestCase):
     def test_192_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = pcbc_encrypt(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = pcbc_encrypt(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
 
         new_plaintext = pcbc_decrypt(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
 
@@ -104,7 +104,7 @@ class TestPCBC(unittest.TestCase):
     def test_256_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = pcbc_encrypt(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = pcbc_encrypt(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
 
         new_plaintext = pcbc_decrypt(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
 
@@ -121,29 +121,29 @@ class TestCFB(unittest.TestCase):
     def test_128_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = cfb_stream(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = cfb_stream(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
 
-        new_plaintext = cfb_stream(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
+        new_plaintext, *_ = cfb_stream(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext)
+        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
 
     def test_192_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = cfb_stream(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = cfb_stream(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
 
-        new_plaintext = cfb_stream(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
+        new_plaintext, *_ = cfb_stream(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext)
+        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
 
     def test_256_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = cfb_stream(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = cfb_stream(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
 
-        new_plaintext = cfb_stream(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
+        new_plaintext, *_ = cfb_stream(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext)
+        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
 
 
 class TestOFB(unittest.TestCase):
@@ -156,29 +156,29 @@ class TestOFB(unittest.TestCase):
     def test_128_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = ofb_stream(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = ofb_stream(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
 
-        new_plaintext = ofb_stream(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
+        new_plaintext, *_ = ofb_stream(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext)
+        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
 
     def test_192_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = ofb_stream(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = ofb_stream(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
 
-        new_plaintext = ofb_stream(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
+        new_plaintext, *_ = ofb_stream(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext)
+        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
 
     def test_256_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = ofb_stream(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = ofb_stream(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
 
-        new_plaintext = ofb_stream(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
+        new_plaintext, *_ = ofb_stream(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext)
+        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
 
 
 class TestCTR(unittest.TestCase):
@@ -191,29 +191,29 @@ class TestCTR(unittest.TestCase):
     def test_128_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = ctr_stream(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = ctr_stream(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
 
-        new_plaintext = ctr_stream(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
+        new_plaintext, *_ = ctr_stream(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext)
+        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
 
     def test_192_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = ctr_stream(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = ctr_stream(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
 
-        new_plaintext = ctr_stream(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
+        new_plaintext, *_ = ctr_stream(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext)
+        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
 
     def test_256_base(self):
         # Test for reversibility of encryption
 
-        ciphertext, _, _ = ctr_stream(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
+        ciphertext, *_ = ctr_stream(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
 
-        new_plaintext = ctr_stream(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
+        new_plaintext, *_ = ctr_stream(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext)
+        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
 
 if __name__ == '__main__':
     AES_Suite = unittest.TestSuite()

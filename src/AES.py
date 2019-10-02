@@ -18,19 +18,10 @@ from src.Key import iter_key
 # TODO finish commenting code
 # TODO Create other block cipher operating modes
 
-def encrypt_decorator(*, stream=False):
+def encrypt_decorator():
     def func_wrapper(func):
         @wraps(func)
         def wrapper(plaintext, password, size, *, iv=None, salt=None):
-
-            output_bytes = stream and (type(plaintext) == str)
-            if output_bytes:
-                # In the case of a stream cipher, like CFB mode
-                # The input can be a hex value in a string because
-                # We're trying to decrypt it.
-                plaintext = bytes.fromhex(plaintext)
-
-
 
             plaintext = [GF(i) for i in plaintext]
             while len(plaintext) % 16 != 0:
@@ -66,15 +57,9 @@ def encrypt_decorator(*, stream=False):
             out = ''
             for block in enc_blocks:
                 for item in block:
-                    if output_bytes and item.int == 0:
-                        continue
                     out = out + str(item)
 
-
-            if output_bytes:
-                return bytes.fromhex(out)
-
-            return (out, *outputs)
+            return (bytes.fromhex(out), *outputs)
 
         return wrapper
     return func_wrapper
@@ -137,7 +122,7 @@ def ecb_encrypt(blocks, key, salt, iv, enc_func):
     :param password: bytes
     :param size: int (must be either 128, 192, or 256)
     :param salt:  bytes=None (not required)
-    :return: ciphertext: string, salt: bytes
+    :return: ciphertext: bytes, salt: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
     """
 
@@ -151,7 +136,7 @@ def ecb_decrypt(blocks, key, _, dec_func):
     """
     Decrypt ciphertext with the Electronic Code Book mode of operation
 
-    :param ciphertext: str
+    :param ciphertext: bytes
     :param password: bytes
     :param size: int (must be either 128, 192, or 256)
     :param salt: bytes
@@ -178,7 +163,7 @@ def cbc_encrypt(blocks, key, salt, iv, enc_func):
     :param size: int (must be either 128, 192, or 256)
     :param iv: bytes (not required but if supplied must be 16 bytes)
     :param salt: bytes (not required
-    :return: ciphertext: string, iv: bytes, salt: bytes
+    :return: ciphertext: bytes, iv: bytes, salt: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
     """
 
@@ -200,7 +185,7 @@ def cbc_decrypt(blocks, key, xor_iv, dec_func):
     """
     Decrypt ciphertext with the Cipher Block Chaining mode of operation
 
-    :param ciphertext: str
+    :param ciphertext: bytes
     :param password: bytes
     :param size: int (must be either 128, 192, or 256)
     :param iv: bytes
@@ -294,7 +279,7 @@ def pcbc_decrypt(blocks, key, xor_iv, dec_func):
     return blocks
 
 
-@encrypt_decorator(stream=True)
+@encrypt_decorator()
 def cfb_stream(blocks, key, salt, iv, func):
     """
     Encrypt and decrypt data with the Cipher Block Chaining mode of operation
@@ -304,7 +289,7 @@ def cfb_stream(blocks, key, salt, iv, func):
     :param size: int (must be either 128, 192, or 256)
     :param iv: bytes (not required if encrypting but if supplied must be 16 bytes)
     :param salt: bytes (not required if encrypting)
-    :return: if encrypting: ciphertext: string, iv: bytes, salt: bytes
+    :return: if encrypting: ciphertext: bytes, iv: bytes, salt: bytes
     :return: if decrypting: plaintext: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
     """
@@ -321,7 +306,7 @@ def cfb_stream(blocks, key, salt, iv, func):
     return blocks, iv, salt
 
 
-@encrypt_decorator(stream=True)
+@encrypt_decorator()
 def ofb_stream(blocks, key, salt, iv, func):
     """
     Encrypt and decrypt data with the Cipher Block Chaining mode of operation
@@ -331,7 +316,7 @@ def ofb_stream(blocks, key, salt, iv, func):
     :param size: int (must be either 128, 192, or 256)
     :param iv: bytes (not required if encrypting but if supplied must be 16 bytes)
     :param salt: bytes (not required if encrypting)
-    :return: if encrypting: ciphertext: string, iv: bytes, salt: bytes
+    :return: if encrypting: ciphertext: bytes, iv: bytes, salt: bytes
     :return: if decrypting: plaintext: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
     """
@@ -347,7 +332,7 @@ def ofb_stream(blocks, key, salt, iv, func):
     return blocks, salt, iv
 
 
-@encrypt_decorator(stream=True)
+@encrypt_decorator()
 def ctr_stream(blocks, key, salt, iv, func):
     """
     Encrypt and decrypt data with the Cipher Block Chaining mode of operation
@@ -357,7 +342,7 @@ def ctr_stream(blocks, key, salt, iv, func):
     :param size: int (must be either 128, 192, or 256)
     :param iv: bytes (not required if encrypting but if supplied must be 16 bytes)
     :param salt: bytes (not required if encrypting)
-    :return: if encrypting: ciphertext: string, iv: bytes, salt: bytes
+    :return: if encrypting: ciphertext: bytes, iv: bytes, salt: bytes
     :return: if decrypting: plaintext: bytes
     :raise: ValueError: if size is not either 128, 192, or 256
     """
