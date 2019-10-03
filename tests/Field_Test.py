@@ -1,7 +1,7 @@
 import unittest
 
-from src.Field import GF, modulus
-from src.Field import sbox, invsbox
+from pyaes.Field import GF, modulus
+from pyaes.Field import sbox, invsbox
 
 
 class TestFieldMethods(unittest.TestCase):

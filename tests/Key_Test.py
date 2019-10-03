@@ -1,7 +1,7 @@
 import unittest
 
-from src.Field import GF
-from src.Key import expand_128, expand_192, expand_256
+from pyaes.Field import GF
+from pyaes.Key import expand_128, expand_192, expand_256
 
 
 # TODO comment code

@@ -1,8 +1,8 @@
 import unittest
 
-from src import AESCore as Core
-from src.Field import GF
-from src.Key import iter_key
+from pyaes import AESCore as Core
+from pyaes.Field import GF
+from pyaes.Key import iter_key
 
 
 # TODO comment code

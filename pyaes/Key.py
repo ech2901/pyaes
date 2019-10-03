@@ -1,4 +1,4 @@
-from src.Field import sbox, GF, modulus
+from pyaes.Field import sbox, GF, modulus
 # sbox needed for key expansion
 
 

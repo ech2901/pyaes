@@ -5,14 +5,14 @@ from hashlib import pbkdf2_hmac as phash
 # Import urandom to get cryptographically secure random bytes
 from os import urandom
 
-from src.AESCore import encrypt_128, encrypt_192, encrypt_256, decrypt_128, decrypt_192, decrypt_256
+from pyaes.AESCore import encrypt_128, encrypt_192, encrypt_256, decrypt_128, decrypt_192, decrypt_256
 # Import Finite(Galois) Field class
 # This handles most of the math operated on values
-from src.Field import GF
+from pyaes.Field import GF
 # Import key generation function
 # Generates the key schedule for a given AES size (128, 192, 256) and loops over the schedule repeatedly
 # So that the keys can be used for each block of plaintext
-from src.Key import iter_key
+from pyaes.Key import iter_key
 
 
 # TODO finish commenting code

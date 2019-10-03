@@ -1,4 +1,4 @@
-from src.Field import GF, sbox, invsbox, modulus
+from pyaes.Field import GF, sbox, invsbox, modulus
 
 
 # TODO comment code

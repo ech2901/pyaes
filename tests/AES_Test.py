@@ -1,9 +1,9 @@
 import unittest
 
-from src.AES import cbc_encrypt, cbc_decrypt
-from src.AES import cfb_stream, ofb_stream, ctr_stream
-from src.AES import ecb_encrypt, ecb_decrypt
-from src.AES import pcbc_encrypt, pcbc_decrypt
+from pyaes.AES import cbc_encrypt, cbc_decrypt
+from pyaes.AES import cfb_stream, ofb_stream, ctr_stream
+from pyaes.AES import ecb_encrypt, ecb_decrypt
+from pyaes.AES import pcbc_encrypt, pcbc_decrypt
 
 
 class TestECB(unittest.TestCase):
