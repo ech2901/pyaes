@@ -70,7 +70,6 @@ def decrypt_decorator(*, req_iv=True, reverse=True):
         @wraps(func)
         def wrapper(ciphertext, password, size, *, iv=None, salt=None):
 
-            ciphertext = bytes.fromhex(ciphertext)
             if len(ciphertext) % 16 != 0:
                 # Ciphertext must always have blocks with 16 bytes of data
                 raise ValueError
