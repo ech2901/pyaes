@@ -17,6 +17,9 @@ Package can be installed with pip via:
 
 pip install ech2901-pyaes
 
-## Usage
+## Simple Use Case
+import pyaes.AES as aes
 
-from ech29
+ciphertext, salt = aes.ecb_encrypt(b'test', b'password')
+
+plaintext = aes.ecb_decrypt(ciphertext, b'password', salt=salt)
