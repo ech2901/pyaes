@@ -5,7 +5,7 @@ with open("README.md", "r") as file:
 
 
 setup(
-    name='pyaes',
+    name='ech2901_pyaes',
     version='1.0.0',
     packages=find_packages(),
     python_requires='>=3.7',
@@ -21,7 +21,6 @@ setup(
 
 
     classifiers=[
-        'Liscense :: OSI Approved :: GPL-3.0',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.7',
         'Intended Audience :: Developers'
