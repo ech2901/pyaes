@@ -15,8 +15,7 @@ from pyaes.Field import GF
 from pyaes.Key import iter_key
 
 
-# TODO finish commenting code
-# TODO Create other block cipher operating modes
+# GOALS: Rework each mode of encryption into it's own class inheriting common functions from a base class.
 
 def encrypt_decorator():
     def func_wrapper(func):
