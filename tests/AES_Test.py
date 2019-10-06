@@ -131,7 +131,7 @@ class TestCFB(unittest.TestCase):
 
         new_plaintext, *_ = self.mode.stream(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
+        self.assertEqual(self.plaintext, new_plaintext)
 
     def test_192_base(self):
         # Test for reversibility of encryption
@@ -140,7 +140,7 @@ class TestCFB(unittest.TestCase):
 
         new_plaintext, *_ = self.mode.stream(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
+        self.assertEqual(self.plaintext, new_plaintext)
 
     def test_256_base(self):
         # Test for reversibility of encryption
@@ -149,7 +149,7 @@ class TestCFB(unittest.TestCase):
 
         new_plaintext, *_ = self.mode.stream(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
+        self.assertEqual(self.plaintext, new_plaintext)
 
 
 class TestOFB(unittest.TestCase):
@@ -167,7 +167,7 @@ class TestOFB(unittest.TestCase):
 
         new_plaintext, *_ = self.mode.stream(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
+        self.assertEqual(self.plaintext, new_plaintext)
 
     def test_192_base(self):
         # Test for reversibility of encryption
@@ -176,7 +176,7 @@ class TestOFB(unittest.TestCase):
 
         new_plaintext, *_ = self.mode.stream(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
+        self.assertEqual(self.plaintext, new_plaintext)
 
     def test_256_base(self):
         # Test for reversibility of encryption
@@ -185,7 +185,7 @@ class TestOFB(unittest.TestCase):
 
         new_plaintext, *_ = self.mode.stream(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
+        self.assertEqual(self.plaintext, new_plaintext)
 
 
 class TestCTR(unittest.TestCase):
@@ -201,27 +201,33 @@ class TestCTR(unittest.TestCase):
 
         ciphertext, *_ = self.mode.stream(self.plaintext, self.password, 128, iv=self.iv, salt=self.salt)
 
+        self.mode.reset_counter()
+
         new_plaintext, *_ = self.mode.stream(ciphertext, self.password, 128, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
+        self.assertEqual(self.plaintext, new_plaintext)
 
     def test_192_base(self):
         # Test for reversibility of encryption
 
         ciphertext, *_ = self.mode.stream(self.plaintext, self.password, 192, iv=self.iv, salt=self.salt)
 
+        self.mode.reset_counter()
+
         new_plaintext, *_ = self.mode.stream(ciphertext, self.password, 192, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
+        self.assertEqual(self.plaintext, new_plaintext)
 
     def test_256_base(self):
         # Test for reversibility of encryption
 
         ciphertext, *_ = self.mode.stream(self.plaintext, self.password, 256, iv=self.iv, salt=self.salt)
 
+        self.mode.reset_counter()
+
         new_plaintext, *_ = self.mode.stream(ciphertext, self.password, 256, iv=self.iv, salt=self.salt)
 
-        self.assertEqual(self.plaintext, new_plaintext.strip(b'\x00'))
+        self.assertEqual(self.plaintext, new_plaintext)
 
 if __name__ == '__main__':
     AES_Suite = unittest.TestSuite()

@@ -1,6 +1,5 @@
 # Import base encryption and decryption functions
 # Import pbkdf2_hmac to generage passwords of a fixed size based on inputs
-from functools import wraps
 from hashlib import pbkdf2_hmac as phash
 # Import urandom to get cryptographically secure random bytes
 from os import urandom
@@ -31,16 +30,26 @@ class BaseAES(object):
         self.hash_iters = hash_iters
 
     def _encrypt_(self, blocks, key, iv, func):
+        # Abstract class to be implemented by inheriting classes
+        # Will be defined as the encryption algorithm of the cipher mode
         raise NotImplementedError
 
     def _decrypt_(self, blocks, key, iv, func):
+        # Abstract class to be implemented by inheriting classes
+        # Will be defined as the decryption algorithm of the cipher mode
         raise NotImplementedError
 
     @staticmethod
-    def to_blocks(text):
+    def to_blocks(btext: bytes):
+        """
+        Conversts a bytes object to a list of GF objects
+        After the conversion, splits the list into sub lists with 16 elements each
 
+        :param btext: bytes
+        :return: list
+        """
         # Create a list of GF objects
-        data = [GF(i) for i in text]
+        data = [GF(i) for i in btext]
 
         while len(data) % 16 != 0:
             # Pad at end of plaintext to make sure it always has blocks with 16 bytes of data
@@ -50,35 +59,73 @@ class BaseAES(object):
         return [data[i:i + 16] for i in range(0, len(data), 16)]
 
     @staticmethod
-    def from_blocks(blocks, strip):
+    def from_blocks(blocks):
+        """
+        Converts a list containing blocks of data into a string representation of a hex number.
+        Then converts that hex number to a bytes object, striping right trailing b'\x00' characters
+        if strip is True.
+
+        :param blocks: list
+        :param strip: bool
+        :return: bytes
+        """
         out = ''
         for block in blocks:
             for item in block:
                 out = out + str(item)
-        return bytes.fromhex(out).rstrip(b'\x00') if strip else bytes.fromhex(out)
+        return bytes.fromhex(out).rstrip(b'\x00')
 
-    def stream(self, plaintext, password, size, salt=None, iv=None):
+    def stream(self, plaintext: bytes, password: bytes, size: int, salt: bytes = None, iv: bytes = None):
+        """
+        Return same output as encrypt function. This method is a naming
+        convention for block cipher modes that are considered streams (EQ: CTR, OFB, and CFB)
 
+        :param plaintext: bytes
+        :param password: bytes
+        :param size: int
+        :param salt: bytes
+        :param iv:bytes
+        :return: bytes
+        """
 
-        # Ultimately this is just to make it more convinient to use stream modes
         return self.encrypt(plaintext, password, size, salt, iv)
 
-    def encrypt(self, plaintext, password, size, salt=None, iv=None):
+    def encrypt(self, plaintext: bytes, password: bytes, size: int, salt: bytes = None, iv: bytes = None):
+        """
+        Processes arguments to an intermediate state, then passes to the _encrypt_ function.
+        Processes output from the _encrypt_ function for use as output.
 
+        :param plaintext: bytes
+        :param password: bytes
+        :param size: int
+        :param salt: bytes
+        :param iv: bytes
+        :return: bytes
+        """
+
+        # Convert plaintext to a list of blocks
+        # Each block is 16 GF objects
         blocks = self.to_blocks(plaintext)
 
         if salt is None:
+            # If salt is not given via argument, generate a random one
             salt = urandom(self.salt_size)
 
+        # Generate an iterable that loops over the key schedule repeatedly
         key = iter_key([GF(i) for i in phash(self.hash_algo, password, salt, self.hash_iters, size / 8)], size)
 
         if iv is None:
+            # If iv is not given via argument, generate a random one
             iv = [GF(i) for i in urandom(16)]
         elif len(iv) != 16:
+            # If iv is given via argument, make sure it's usable
             raise ValueError
         else:
+            # convert iv to a list of GF objects
             iv = [GF(i) for i in iv]
 
+        # select appropriate encryption key size
+        # raise a ValueError if the given key size is invalid
         if size == 128:
             enc_func = encrypt_128
         elif size == 192:
@@ -88,20 +135,38 @@ class BaseAES(object):
         else:
             raise ValueError
 
+        # Actually perform the encryption
         blocks, *outputs = self._encrypt_(blocks, key, iv, enc_func)
 
-        out = self.from_blocks(blocks, False)
+        # Process newly encrypted blocks to a usable format
+        out = self.from_blocks(blocks)
+        # Insert the salt into the outputs
         outputs.insert(0, salt)
 
         return (out, *outputs)
 
-    def decrypt(self, ciphertext, password, size, salt=None, iv=None):
+    def decrypt(self, ciphertext: bytes, password: bytes, size: int, salt: bytes = None, iv: bytes = None):
+        """
+        Processes arguments to an intermediate state, then passes to the _decrypt_ function.
+        Processes output from the _decrypt_ function for use as output.
 
+        :param ciphertext: bytes
+        :param password: bytes
+        :param size: int
+        :param salt: bytes
+        :param iv: bytes
+        :return: bytes
+        """
+
+        # Convert plaintext to a list of blocks
+        # Each block is 16 GF objects
         blocks = self.to_blocks(ciphertext)
 
         if salt is None:
+            # If salt is not given via argument, generate a random one
             salt = urandom(self.salt_size)
 
+        # Generate an iterable that loops over the key schedule repeatedly
         key = iter_key([GF(i) for i in phash(self.hash_algo, password, salt, self.hash_iters, size / 8)], size, reverse=True)
 
         if iv is None:
@@ -109,8 +174,11 @@ class BaseAES(object):
         elif len(iv) != 16:
             raise ValueError
         else:
+            # convert iv to a list of GF objects
             iv = [GF(i) for i in iv]
 
+        # select appropriate decryption key size
+        # raise a ValueError if the given key size is invalid
         if size == 128:
             dec_func = decrypt_128
         elif size == 192:
@@ -120,9 +188,10 @@ class BaseAES(object):
         else:
             raise ValueError
 
+        # Actually perform the decryption
         blocks = self._decrypt_(blocks, key, iv, dec_func)
-
-        return self.from_blocks(blocks, True)
+        # Process and return newly decrypted blocks to a usable format
+        return self.from_blocks(blocks)
 
 
 class ECB(BaseAES):
@@ -341,15 +410,35 @@ class CTR(BaseAES):
         super().__init__(salt_size, hash_algo, hash_iters)
 
         if counter_func is None:
-            self.counter = self.default_counter()
+            self.counter_func = self.default_counter_func()
+
         else:
-            self.counter = counter_func
+            self.counter_func = counter_func
+
+        self.counter = self.counter_func()
 
     @staticmethod
-    def default_counter(count=0, inc=1):
-        while True:
-            yield count
-            count = count+inc
+    def default_counter_func(count: int = 0, inc: int = 1):
+        """
+
+        :param count: int
+        :param inc: int
+        :return: fucntion
+        """
+        def wrapper():
+            # Actual generator that increments
+            def counter(gen_count):
+                # Generator can not get count argument from outer scope(s).
+                while True:
+                    yield gen_count
+                    gen_count = gen_count+inc
+            # Return a generator
+            return counter(count)
+
+        return wrapper
+
+    def reset_counter(self):
+        self.counter = self.counter_func()
 
     def _encrypt_(self, blocks, key, iv, func):
         """
