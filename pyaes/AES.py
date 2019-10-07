@@ -14,7 +14,6 @@ from pyaes.Field import GF
 from pyaes.Key import iter_key
 
 
-
 class BaseAES(object):
     def __init__(self, salt_size=64, hash_algo='sha256', hash_iters=1_000_000):
         """
@@ -142,7 +141,7 @@ class BaseAES(object):
         # If an IV is returned in the format of a list with GF elements
         # Convert it back to bytes without any stripping of trailing 0s
         if len(outputs):
-            outputs[0] = self.from_blocks(outputs[0], False)
+            outputs = [self.from_blocks(outputs, False)]
 
         # Insert the salt into the outputs
         outputs.insert(0, salt)
