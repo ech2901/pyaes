@@ -57,7 +57,7 @@ class BaseAES(object):
         return [data[i:i + 16] for i in range(0, len(data), 16)]
 
     @staticmethod
-    def from_blocks(blocks):
+    def from_blocks(blocks, strip=True):
         """
         Converts a list containing blocks of data into a string representation of a hex number.
         Then converts that hex number to a bytes object, striping right trailing b'\x00' characters
@@ -71,7 +71,7 @@ class BaseAES(object):
         for block in blocks:
             for item in block:
                 out = out + str(item)
-        return bytes.fromhex(out).rstrip(b'\x00')
+        return bytes.fromhex(out).rstrip(b'\x00') if strip else bytes.fromhex(out)
 
     def stream(self, plaintext: bytes, password: bytes, size: int, salt: bytes = None, iv: bytes = None):
         """
@@ -138,6 +138,12 @@ class BaseAES(object):
 
         # Process newly encrypted blocks to a usable format
         out = self.from_blocks(blocks)
+
+        # If an IV is returned in the format of a list with GF elements
+        # Convert it back to bytes without any stripping of trailing 0s
+        if len(outputs):
+            outputs[0] = self.from_blocks(outputs[0], False)
+
         # Insert the salt into the outputs
         outputs.insert(0, salt)
 
