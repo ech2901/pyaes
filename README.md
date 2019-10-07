@@ -15,7 +15,7 @@ End goal is to be used in the creation of a password manager system.
 
 Package can be installed with pip via:
 
-pip install ech2901-pyaes
+pip install ech2901-pyaes==1.2.0
 
 ## Simple Use Case
 from pyaes.AES import ECB
