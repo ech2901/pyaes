@@ -22,6 +22,6 @@ from pyaes.AES import ECB
 
 ecb_mode = ECB()
 
-ciphertext, salt = ecb_mode.encrypt(b'test', b'password')
+ciphertext, salt = ecb_mode.encrypt(plaintext=b'test', password=b'password', size=128)
 
-plaintext = ecb_mode.decrypt(ciphertext, b'password', salt=salt)
+plaintext = ecb_mode.decrypt(ciphertext=ciphertext, password=b'password', size=128)
