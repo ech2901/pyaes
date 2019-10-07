@@ -18,8 +18,10 @@ Package can be installed with pip via:
 pip install ech2901-pyaes
 
 ## Simple Use Case
-import pyaes.AES as aes
+from pyaes.AES import ECB
 
-ciphertext, salt = aes.ecb_encrypt(b'test', b'password')
+ecb_mode = ECB()
 
-plaintext = aes.ecb_decrypt(ciphertext, b'password', salt=salt)
+ciphertext, salt = ecb_mode.encrypt(b'test', b'password')
+
+plaintext = ecb_mode.decrypt(ciphertext, b'password', salt=salt)
