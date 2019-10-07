@@ -14,8 +14,6 @@ from pyaes.Field import GF
 from pyaes.Key import iter_key
 
 
-# GOALS: Rework each mode of encryption into it's own class inheriting common functions from a base class.
-
 
 class BaseAES(object):
     def __init__(self, salt_size=64, hash_algo='sha256', hash_iters=1_000_000):

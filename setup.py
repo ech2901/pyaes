@@ -6,7 +6,7 @@ with open("README.md", "r") as file:
 
 setup(
     name='ech2901_pyaes',
-    version='1.1.0',
+    version='1.2.0',
     packages=find_packages(),
     python_requires='>=3.7',
 
