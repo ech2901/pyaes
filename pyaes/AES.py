@@ -109,7 +109,7 @@ class BaseAES(object):
             salt = urandom(self.salt_size)
 
         # Generate an iterable that loops over the key schedule repeatedly
-        key = iter_key([GF(i) for i in phash(self.hash_algo, password, salt, self.hash_iters, size / 8)], size)
+        key = iter_key([GF(i) for i in phash(self.hash_algo, password, salt, self.hash_iters, size // 8)], size)
 
         if iv is None:
             # If iv is not given via argument, generate a random one
@@ -170,7 +170,7 @@ class BaseAES(object):
             salt = urandom(self.salt_size)
 
         # Generate an iterable that loops over the key schedule repeatedly
-        key = iter_key([GF(i) for i in phash(self.hash_algo, password, salt, self.hash_iters, size / 8)], size, reverse=True)
+        key = iter_key([GF(i) for i in phash(self.hash_algo, password, salt, self.hash_iters, size // 8)], size, reverse=True)
 
         if iv is None:
             iv = [GF(i) for i in urandom(16)]
